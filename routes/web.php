@@ -12,5 +12,5 @@
 */
 
 Route::get('/','PageController@root')->name('root');
-Auth::routes();
+Auth::routes(['verify' => true]);
 
