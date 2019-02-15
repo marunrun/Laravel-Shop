@@ -9,13 +9,13 @@ class UserAddressRequest extends Request
     public function rules()
     {
         return [
-            'province' => 'required',
-            'city' => 'required',
-            'district' => 'required',
-            'address' => 'required',
-            'zip' => 'required',
-            'contact_name' => 'required',
-            'contact_phone' => 'required',
+            'province' => 'required|string',
+            'city' => 'required|string',
+            'district' => 'required|string',
+            'address' => 'required|string',
+            'zip' => 'required|integer',
+            'contact_name' => 'required|string',
+            'contact_phone' => 'required|phone',
         ];
     }
 

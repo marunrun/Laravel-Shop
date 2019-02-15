@@ -1,14 +1,15 @@
 @extends('layouts.app')
 
-@section('title','新增收获地址')
+@section('title',($address->id ? '修改' : '新增').'收获地址')
 
 @section('content')
     <div class="row">
         <div class="col-md-10 offset-lg-1">
             <div class="card">
                 <div class="card-header">
-                    <h2 class="text-center">新增收货地址</h2>
-
+                    <h2 class="text-center">
+                        {{$address->id ? '修改' : '新增'}}收货地址
+                    </h2>
                 </div>
                 <div class="card-body">
                     {{--输出后端报错  开始--}}
@@ -25,10 +26,17 @@
                     {{--输出后端错误 结束--}}
 
                     <user-addresses-create-and-edit inline-template>
-                        <form action="{{ route('user_addresses.store') }}" method="POST" class="form-horizontal" role="form">
+                        @if($address->id)
+                        <form action="{{ route('user_addresses.update',['address' => $address->id]) }}"
+                              method="POST" class="form-horizontal" role="form" >
+                            {{method_field('PUT')}}
+                        @else
+                        <form action="{{ route('user_addresses.store') }}" method="POST" class="form-horizontal" role="form" >
+                        @endif
                             {{ csrf_field() }}
 
-                            <select-district @change="onDistrictChanged" inline-template>
+                            <select-district :init-value="{{ json_encode([$address->province,$address->city,$address->district]) }}"
+                                    @change="onDistrictChanged" inline-template>
                                 <div class="form-group row">
                                     <label class="col-form-label col-sm-2 text-md-right">省市区</label>
                                     <div class="col-md-3">
