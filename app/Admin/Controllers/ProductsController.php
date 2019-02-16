@@ -76,7 +76,7 @@ class ProductsController extends Controller
 
         $grid->price('价格');
         $grid->rating('评分');
-        $grid->sale_count('销量');
+        $grid->sold_count('销量');
         $grid->review_count('评论数');
 
         $grid->actions(function ($actions) {

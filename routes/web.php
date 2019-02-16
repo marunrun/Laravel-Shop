@@ -11,8 +11,6 @@
 |
 */
 
-// 首页
-Route::get('/','PageController@root')->name('root');
 
 // 开启用户认证的所有路由 并开启邮箱检测
 Auth::routes(['verify' => true]);
@@ -29,3 +27,8 @@ Route::group(['middleware' => ['auth','verified']],function () {
     Route::delete('user_addresses/{address}','UserAddressesController@destroy')->name('user_addresses.destroy');
 });
 
+// 无需登陆 认证
+// 首页
+Route::redirect('/','/products')->name('root');
+
+Route::get('/products','ProductsController@index')->name('products.index');

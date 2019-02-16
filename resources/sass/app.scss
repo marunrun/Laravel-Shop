@@ -1,10 +1,7 @@
-
 // Fonts
 @import url('https://fonts.googleapis.com/css?family=Nunito');
-
 // Variables
 @import 'variables';
-
 // Bootstrap
 @import '~bootstrap/scss/bootstrap';
 
@@ -14,7 +11,7 @@
 }
 
 body {
-  font-family: Hiragino Sans GB , "Hiragino Sans GB" , Helvetica , "Microsoft YaHei" , Arial ,sans-serif;
+  font-family: Hiragino Sans GB, "Hiragino Sans GB", Helvetica, "Microsoft YaHei", Arial, sans-serif;
   font-size: 14px;
 }
 
@@ -22,7 +19,7 @@ body {
 .navbar-static-top {
   border-color: #e7e7e7;
   background-color: #fff;
-  box-shadow: 0px 1px 11px 2px rgb(42,42,42,0.1);
+  box-shadow: 0px 1px 11px 2px rgb(42, 42, 42, 0.1);
   border-top: 4px solid #00b5ad;
   border-bottom: 1px solid #e8e8e8;
   margin-bottom: 40px;
@@ -49,17 +46,87 @@ body {
   background-color: #000000;
 
   .container {
-    padding-right : 15px;
-    padding-left : 15px;
+    padding-right: 15px;
+    padding-left: 15px;
 
     p {
-      margin : 19px 0;
-      color : #c1c1c1;
+      margin: 19px 0;
+      color: #c1c1c1;
 
       a {
-        color : inherit;
+        color: inherit;
       }
     }
   }
 }
 
+.products-index-page {
+  .products-list {
+    padding: 0 15px;
+
+    .product-item {
+      padding: 0 5px;
+      margin-bottom: 10px;
+
+      .product-content {
+        border: 1px solid #eee;
+
+        .top {
+          padding: 5px;
+
+          img {
+            width: 100%;
+          }
+
+          .price {
+            margin-top: 5px;
+            font-size: 20px;
+            color: #ff0036;
+
+            b {
+              font-size: 14px;
+            }
+          }
+
+          .title {
+            margin-top: 10px;
+            height: 32px;
+            line-height: 12px;
+            max-height: 32px;
+
+            a {
+              font-size: 12px;
+              line-height: 14px;
+              color: #333;
+              text-decoration: none;
+            }
+          }
+        }
+        .bottom {
+          font-size: 12px;
+          display: flex;
+          .sold_count span {
+            color: #b57c5b;
+            font-weight: bold;
+          }
+          .review_count span{
+            color: #38b;
+            font-weight: bold;
+          }
+          &>div {
+            &:first-child {
+              border-right:1px solid #eee;
+            }
+            padding:10px 5px;
+            line-height:12px;
+            flex-grow:1;
+            border-top:1px solid #eee;
+          }
+        }
+      }
+    }
+  }
+  .pagination {
+    margin-right: 5px;
+  }
+}
