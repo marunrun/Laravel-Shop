@@ -9,8 +9,38 @@ class ProductsController extends Controller
 {
     public function index(Request $request)
     {
-        $products = Product::where('on_sale',true)->paginate(16);
+        // 创建一个查询构建器
+        $builder = Product::query()->where('on_sale',true);
 
-        return view('products.index',['products' => $products]);
+        // 模糊搜索 商品标题 描述  sku标题 sku描述
+        if ($search = $request->get('search','')) {
+            $like = '%'.$search.'%';
+            $builder->where(function ($query) use ($like){
+                $query->where('title','like',$like)
+                    ->orWhere('description','like',$like)
+                    ->orWhereHas('skus',function ($query) use ($like){
+                        $query->where('title','like',$like)
+                            ->orWhere('description','like',$like);
+                    });
+            });
+        }
+        // 是否有提交 order 参数 如果有 就赋值给$order
+        if ($order = $request->get('order','')){
+            if (preg_match('/^(.+)_(asc|desc)$/',$order,$m)) {
+                if (in_array($m[1],['price','sold_count','rating'])){
+                    $builder->orderBy($m[1],$m[2]);
+                }
+            }
+        }
+
+        $products = $builder->paginate(16);
+
+        return view('products.index',[
+            'products' => $products,
+            'filters' => [
+                'search' => $search,
+                'order' => $order,
+            ]
+        ]);
     }
 }
