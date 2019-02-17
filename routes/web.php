@@ -28,7 +28,9 @@ Route::group(['middleware' => ['auth','verified']],function () {
 });
 
 // 无需登陆 认证
-// 首页
+// 首页 商品列表
 Route::redirect('/','/products')->name('root');
-
 Route::get('/products','ProductsController@index')->name('products.index');
+
+// 商品详情
+Route::get('/products/{product}','ProductsController@show')->name('products.show');
