@@ -1,0 +1,1 @@
+@include('pages.error',['msg' => '这里什么都没有哦！'])
