@@ -16,7 +16,8 @@
                             <div class="price"><label>价格</label><em>￥</em><span>{{ $product->price }}</span></div>
                             <div class="sales_and_reviews">
                                 <div class="sold_count">累计销量 <span class="count">{{ $product->sold_count }}</span></div>
-                                <div class="review_count">累计评价 <span class="count">{{ $product->review_count }}</span></div>
+                                <div class="review_count">累计评价 <span class="count">{{ $product->review_count }}</span>
+                                </div>
                                 <div class="rating" title="评分 {{ $product->rating }}">
                                     评分 <span class="count">
                                     {{ str_repeat('★',floor($product->rating)) }}{{ str_repeat('☆',5 - floor($product->rating)) }}
@@ -33,7 +34,8 @@
                                                data-toggle="tooltip"
                                                data-placement="bottom"
                                                title="{{ $sku->title }}">
-                                            <input type="radio" name="skus" autocomplete="off" value="{{ $sku->id }}">{{ $sku->title }}
+                                            <input type="radio" name="skus" autocomplete="off"
+                                                   value="{{ $sku->id }}">{{ $sku->title }}
                                         </label>
                                     @endforeach
                                 </div>
@@ -44,7 +46,11 @@
                                 <span>件</span><span class="stock"></span>
                             </div>
                             <div class="buttons">
+                                @if($favored)
+                                <button class="btn btn-danger btn-disfavor">取消收藏</button>
+                                @else
                                 <button class="btn btn-success btn-favor">❤收藏</button>
+                                @endif
                                 <button class="btn btn-primary btn-add-to-cart">加入购物车</button>
                             </div>
                         </div>
@@ -76,11 +82,50 @@
 @section('scriptsAfterJs')
     <script>
         $(function () {
+            let token = document.head.querySelector('meta[name="csrf-token"]');
+            // 提示工具
             $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'});
+            // 给btns绑定点击事件
             $('.sku-btn').click(function () {
                 $('.product-info .price span').text($(this).data('price'));
-                $('.product-info .stock').text('库存:'+ $(this).data('stock')+'件');
+                $('.product-info .stock').text('库存:' + $(this).data('stock') + '件');
+            });
+
+            // 收藏按钮的点击事件
+            $('.btn-favor').click(function () {
+                axios.post('{{ route('products.favor',['product' => $product->id]) }}')
+                    .then(function (response) { // 请求成功走这个回调
+                        swal('收藏成功', '', 'success')
+                            .then(function () {
+                                location.reload();
+                            })
+                    }).catch (function(error){ // 请求失败走这个回调
+                        if (error.response && error.response.status == 401) { // 未登陆时的提示
+                            swal('请登陆后再重试','','error');
+                        } else if(error.response && error.response.msg ){
+                            swal(error.response.msg,'','error');
+                        }else if(error.response && error.response.status == 403){ // 未验证邮箱时的提示
+                            swal('请先验证邮箱再进行操作','','error')
+                                .then(function () {
+                                    location.href = '{{ route('verification.notice') }}'
+                                })
+                        }else {
+                            swal('系统错误','','error'); // 这里就是系统的一些内存错误了
+                        }
+                })
+            });
+
+            // 取消收藏的点击事件
+            $('.btn-disfavor').click(function () {
+                axios.delete('{{ route('products.disfavor',['product' => $product->id]) }}')
+                    .then(function () {
+                        swal('已取消收藏','','success')
+                            .then(function () {
+                                location.reload();
+                            })
+                    })
             })
-        })
+
+        });
     </script>
 @stop
