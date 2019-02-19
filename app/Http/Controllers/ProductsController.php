@@ -10,6 +10,10 @@ use PhpParser\Node\Stmt\Throw_;
 
 class ProductsController extends Controller
 {
+    /** 首页
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         // 创建一个查询构建器
@@ -47,6 +51,12 @@ class ProductsController extends Controller
         ]);
     }
 
+    /** 商品详情页面
+     * @param Product $product
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @throws InvalidRequestException
+     */
     public function show(Product $product, Request $request)
     {
         if (!$product->on_sale) {
@@ -61,6 +71,11 @@ class ProductsController extends Controller
         return view('products.show',compact('product','favored'));
     }
 
+    /** 收藏商品
+     * @param Product $product
+     * @param Request $request
+     * @return array
+     */
     public function favor(Product $product, Request $request)
     {
         $user = $request->user();
@@ -73,6 +88,11 @@ class ProductsController extends Controller
         return [];
     }
 
+    /**取消收藏
+     * @param Product $product
+     * @param Request $request
+     * @return array
+     */
     public function disfavor(Product $product, Request $request)
     {
         $user = $request->user();
@@ -80,5 +100,16 @@ class ProductsController extends Controller
         $user->favoriteProducts()->detach($product);
 
         return [];
+    }
+
+    /**
+     *  我的收藏列表
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function favorites(Request $request)
+    {
+        $products = $request->user()->favoriteProducts()->paginate(16);
+        return view('products.favorites',compact('products'));
     }
 }

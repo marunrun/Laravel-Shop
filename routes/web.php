@@ -27,10 +27,11 @@ Route::group(['middleware' => ['auth','verified']],function () {
     Route::put('user_addresses/{address}','UserAddressesController@update')->name('user_addresses.update');
     Route::delete('user_addresses/{address}','UserAddressesController@destroy')->name('user_addresses.destroy');
 
-
-    // 收藏商品和取消收藏的路由
+    // 收藏商品和取消收藏 我的收藏列表
     Route::post('products/{product}/favorite','ProductsController@favor')->name('products.favor');
     Route::delete('products/{product}/favorite','ProductsController@disfavor')->name('products.disfavor');
+    Route::get('products/favorites','ProductsController@favorites')->name('products.favorites');
+
 });
 
 // 无需登陆 认证
