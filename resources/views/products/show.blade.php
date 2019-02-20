@@ -124,7 +124,36 @@
                                 location.reload();
                             })
                     })
-            })
+            });
+
+            // 加入购物车的点击事件
+            $('.btn-add-to-cart').click(function () {
+                axios.post('{{ route('cart.add') }}',{
+                    sku_id : $('label.active input[name=skus]').val(),
+                    amount : $('.cart_amount input').val()
+                })
+                    .then(function () { //请求成功执行此回调
+                        swal('加入购物车成功','','success');
+                    }),function (error) {
+                        if (error.response.status === 401){
+                            // 401 代表用户未登陆
+                            swal('请登陆后重试','','error');
+
+                        }else if (error.response.status === 402){
+                            //402 代表用户表单验证失败
+                            var html = '<div>';
+                            _.each(error.response.data.errors, function (errors) {
+                                _.each(errors, function (error) {
+                                    html += error+'<br>';
+                                })
+                            });
+                            html += '</div>';
+                            swal({content: $(html)[0], icon: 'error'})
+                        } else {
+                            swal('系统错误', '', 'error');
+                        }
+                }
+            });
 
         });
     </script>
