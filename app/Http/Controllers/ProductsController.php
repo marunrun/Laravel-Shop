@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
+use App\Facade\Token;
 use App\Models\Product;
 use App\Models\ProductSku;
 use Illuminate\Http\Request;

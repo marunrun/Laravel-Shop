@@ -134,12 +134,15 @@
                 })
                     .then(function () { //请求成功执行此回调
                         swal('加入购物车成功','','success');
-                    }),function (error) {
+                    }).catch(function (error) {
                         if (error.response.status === 401){
                             // 401 代表用户未登陆
                             swal('请登陆后重试','','error');
 
-                        }else if (error.response.status === 402){
+                        }else if (error.response.status === 403){
+                            swal('验证邮箱后重试','','error');
+                        }
+                        else if (error.response.status === 422){
                             //402 代表用户表单验证失败
                             var html = '<div>';
                             _.each(error.response.data.errors, function (errors) {
@@ -152,7 +155,7 @@
                         } else {
                             swal('系统错误', '', 'error');
                         }
-                }
+                })
             });
 
         });

@@ -34,6 +34,8 @@ Route::group(['middleware' => ['auth','verified']],function () {
 
     // 购物相关
     Route::post('cart','CartItemsController@add')->name('cart.add');
+    Route::get('cart','CartItemsController@index')->name('cart.index');
+    Route::delete('cart/{sku}','CartItemsController@remove')->name('cart.remove');
 });
 
 // 无需登陆 认证

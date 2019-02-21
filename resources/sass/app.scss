@@ -37,6 +37,7 @@ body {
   margin-bottom: 60px;
 }
 
+// 页脚
 .footer {
   position: absolute;
   bottom: 0;
@@ -60,6 +61,7 @@ body {
   }
 }
 
+// 商品列表和我的收藏样式
 .products-index-page, .products-favorites-page {
   .products-list {
     padding: 0 15px;
@@ -137,6 +139,8 @@ body {
   }
 }
 
+
+// 商品详情的样式
 .products-show-page{
   .cover {
     width: 100%;
@@ -253,6 +257,54 @@ body {
     .tab-content {
       border: 1px solid #eee;
       padding: 20px;
+    }
+  }
+}
+
+
+// 购物车表格的css样式
+.cart-index-page {
+  .product_list {
+    .preview {
+      img {
+        max-width: 80px;
+        max-height: 80px;
+      }
+      margin-right: 20px;
+    }
+
+    .product_info {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      font-size: 12px;
+      .product_title, .sku_title, .warning {
+        display: block;
+      }
+
+      .product_title a {
+        color: #3c3c3c;
+        font-size: 14px;
+      }
+      .not_on_sale {
+        .product_title, .sku_title {
+          text-decoration: line-through;
+        }
+        .warning {
+          color: red;
+        }
+      }
+    }
+
+    .price {
+      font-size: 12px;
+      font-weight: 700;
+      color: #3c3c3c;
+    }
+
+    input.amount {
+      width: 60px;
+      border-radius: 0 !important;
     }
   }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Product;
 use App\Models\ProductSku;
-use Illuminate\Foundation\Http\FormRequest;
 
 class AddCartRequest extends Request
 {
@@ -23,7 +23,7 @@ class AddCartRequest extends Request
                         return $fail('该商品不存在');
                     }
 
-                    if (!$sku->on_sale) {
+                    if (!$sku->product->on_sale) {
                         return $fail('该商品已下架');
                     }
 
