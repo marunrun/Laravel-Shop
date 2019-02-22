@@ -32,10 +32,13 @@ Route::group(['middleware' => ['auth','verified']],function () {
     Route::delete('products/{product}/favorite','ProductsController@disfavor')->name('products.disfavor');
     Route::get('products/favorites','ProductsController@favorites')->name('products.favorites');
 
-    // 购物相关
+    // 购物车相关
     Route::post('cart','CartItemsController@add')->name('cart.add');
     Route::get('cart','CartItemsController@index')->name('cart.index');
     Route::delete('cart/{sku}','CartItemsController@remove')->name('cart.remove');
+
+    // 订单相关
+    Route::post('order','OrdersController@store')->name('order.store');
 });
 
 // 无需登陆 认证

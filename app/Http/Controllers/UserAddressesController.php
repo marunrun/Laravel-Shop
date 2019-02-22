@@ -35,7 +35,9 @@ class UserAddressesController extends Controller
             'contact_phone',
         ]));
 
-        return redirect()->route('user_addresses.index');
+        $url = $request->get('from',route('user_addresses.index'));
+
+        return redirect($url);
     }
     
     // 修改的页面

@@ -34,7 +34,7 @@
                         <form action="{{ route('user_addresses.store') }}" method="POST" class="form-horizontal" role="form" >
                         @endif
                             {{ csrf_field() }}
-
+                            <input type="hidden" name="from" value="{{ Request::get('from') }}">
                             <select-district :init-value="{{ json_encode([$address->province,$address->city,$address->district]) }}"
                                     @change="onDistrictChanged" inline-template>
                                 <div class="form-group row">

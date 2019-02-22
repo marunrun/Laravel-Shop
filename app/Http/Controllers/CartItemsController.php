@@ -22,9 +22,6 @@ class CartItemsController extends Controller
 
         if ($cart = $user->cartItems()->where('product_sku_id',$skuId)->first()) {
             // 如果购物车中已存在 则在原有的基础上增加 数量
-//            $cart->update([
-//                'amount' => $cart->amount + $amount
-//            ]);
             $cart->increment('amount',$amount);
         } else {
             // 否则 就添加一条新的记录
@@ -48,7 +45,8 @@ class CartItemsController extends Controller
         // 预加载
         $cartItems = $user->cartItems()->with('productSku.product')->get();
 
-        return view('cart.index',compact('cartItems'));
+        $addresses = $user->addresses()->orderBy('last_used_at','desc')->get();
+        return view('cart.index',compact('cartItems','addresses'));
     }
 
 
