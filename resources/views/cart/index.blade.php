@@ -193,7 +193,7 @@
                 }
 
                 // 提交
-                axios.post('{{ route('order.store') }}', req)
+                axios.post('{{ route('orders.store') }}', req)
                     .then(function (response) {
                         swal('订单提交成功', '', 'success')
                             .then(function () {

@@ -38,7 +38,8 @@ Route::group(['middleware' => ['auth','verified']],function () {
     Route::delete('cart/{sku}','CartItemsController@remove')->name('cart.remove');
 
     // 订单相关
-    Route::post('order','OrdersController@store')->name('order.store');
+    Route::post('order','OrdersController@store')->name('orders.store');
+    Route::get('order','OrdersController@index')->name('orders.index');
 });
 
 // 无需登陆 认证

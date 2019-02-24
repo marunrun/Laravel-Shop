@@ -14,6 +14,12 @@ use Illuminate\Http\Request;
 
 class OrdersController extends Controller
 {
+
+
+    /** 提交订单的逻辑代码
+     * @param OrderRequest $request
+     * @return mixed
+     */
     public function store(OrderRequest $request)
     {
         $user = $request->user();
@@ -74,12 +80,24 @@ class OrdersController extends Controller
             $skuIds = collect($items)->pluck('sku_id');
             $user->cartItems()->whereIn('product_sku_id', $skuIds)->delete();
 
-            // 延迟任务
+            // 延迟任务 30 分钟后关闭未付款订单
             $this->dispatch(new CloseOrder($order,config('shop.order_ttl')));
 
             return $order;
         });
 
         return $order;
+    }
+
+    public function index(Request $request)
+    {
+        // 使用预加载避免n+1
+        $orders = Order::query()
+            ->with(['items.product','items.productSku'])
+            ->where('user_id',$request->user()->id)
+            ->orderBy('created_at','desc')
+            ->paginate();
+
+        return view('orders.index', compact('orders'));
     }
 }

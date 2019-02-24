@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-static-top">
     <div class="container">
-        {{--品牌名称--}}
-        <a href="{{ url('/') }}" class="navbar-brand">
+        
+        <a href="<?php echo e(url('/'), false); ?>" class="navbar-brand">
             Laravel Shop
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
@@ -10,41 +10,43 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            {{--左侧的导航--}}
+            
             <ul class="navbar-nav mr-auto">
 
             </ul>
 
-            {{--右侧导航--}}
+            
             <ul class="navbar-nav navbar-right">
-                {{--登陆注册链接--}}
-                @guest
-                    <li class="nav-item"><a href="{{ route('login') }}?from={{ Request::path() }}" class="nav-link">登陆</a></li>
-                    <li class="nav-item"><a href="{{ route('register') }}" class="nav-link">注册</a></li>
-                @else
+                
+                <?php if(auth()->guard()->guest()): ?>
+                    <li class="nav-item"><a href="<?php echo e(route('login'), false); ?>?from=<?php echo e(Request::path(), false); ?>" class="nav-link">登陆</a></li>
+                    <li class="nav-item"><a href="<?php echo e(route('register'), false); ?>" class="nav-link">注册</a></li>
+                <?php else: ?>
                     <li class="nav-item">
-                        <a href="{{ route('cart.index') }}" class="nav-link mt-1"><i class="fa fa-shopping-cart"></i></a>
+                        <a href="<?php echo e(route('cart.index'), false); ?>" class="nav-link mt-1"><i class="fa fa-shopping-cart"></i></a>
                     </li>
                     <li class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" id="navbarDropdown" role="button"
                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <img src="https://iocaffcdn.phphub.org/uploads/images/201709/20/1/PtDKbASVcz.png?imageView2/1/w/60/h/60"
                                  class="img-responsive img-circle" width="30px" height="30px">
-                            {{ Auth::user()->name }}
+                            <?php echo e(Auth::user()->name, false); ?>
+
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a href="{{ route('user_addresses.index') }}" class="dropdown-item">收获地址</a>
-                            <a href="{{ route('orders.index') }}" class="dropdown-item">我的订单</a>
-                            <a href="{{ route('products.favorites') }}" class="dropdown-item">我的收藏</a>
+                            <a href="<?php echo e(route('user_addresses.index'), false); ?>" class="dropdown-item">收获地址</a>
+                            <a href="<?php echo e(route('orders.index'), false); ?>" class="dropdown-item">我的订单</a>
+                            <a href="<?php echo e(route('products.favorites'), false); ?>" class="dropdown-item">我的收藏</a>
                             <a href="#" class="dropdown-item" id="logout"
                                onclick="event.preventDefault();document.getElementById('logout-form').submit();">退出登陆</a>
-                            <form action="{{ route('logout') }}" method="POST" id="logout-form" style="display: none;">
-                                {{csrf_field()}}
+                            <form action="<?php echo e(route('logout'), false); ?>" method="POST" id="logout-form" style="display: none;">
+                                <?php echo e(csrf_field(), false); ?>
+
                             </form>
                         </div>
                     </li>
-                @endguest
-                {{--登陆注册链接结束--}}
+                <?php endif; ?>
+                
             </ul>
         </div>
     </div>
