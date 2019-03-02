@@ -61,7 +61,7 @@ class OrdersController extends Controller
 
                 $item = $order->items()->make([
                     'amount' => $data['amount'],
-                    'price' => $sku->price * $data['amount']
+                    'price' => $sku->price
                 ]);
                 $item->product()->associate($sku->product_id);
                 $item->productSku()->associate($sku);
@@ -89,6 +89,10 @@ class OrdersController extends Controller
         return $order;
     }
 
+    /** 订单列表
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
     public function index(Request $request)
     {
         // 使用预加载避免n+1
@@ -99,5 +103,13 @@ class OrdersController extends Controller
             ->paginate();
 
         return view('orders.index', compact('orders'));
+    }
+
+
+    public function show(Order $order, Request $request)
+    {
+        $this->authorize('own',$order);
+
+        return view('orders.show',['order' => $order->load(['items.productSku', 'items.product'])]);
     }
 }

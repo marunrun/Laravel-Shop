@@ -197,7 +197,7 @@
                     .then(function (response) {
                         swal('订单提交成功', '', 'success')
                             .then(function () {
-                                location.reload();
+                                location.href='/order/' + response.data.id;
                             });
                     }).catch(function (error) {
                     if (error.response.status == 422) {

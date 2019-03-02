@@ -71,7 +71,7 @@
                                                             @endif
                                                         </td>
                                                         <td rowspan="{{ count($order->items) }}" class="text-center">
-                                                            <a href="" class="btn btn-primary btn-sm">查看订单</a>
+                                                            <a href="{{ route('orders.show',[$order->id]) }}" class="btn btn-primary btn-sm">查看订单</a>
                                                         </td>
                                                     @endif
                                                 </tr>
