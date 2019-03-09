@@ -41,6 +41,10 @@ Route::group(['middleware' => ['auth','verified']],function () {
     Route::post('order','OrdersController@store')->name('orders.store');
     Route::get('order','OrdersController@index')->name('orders.index');
     Route::get('order/{order}','OrdersController@show')->name('orders.show');
+
+    // 支付相关
+    Route::get('payment/{order}/alipay','PaymentController@payByAlipay')->name('payment.alipay');
+    Route::get('payment/alipay/return','PaymentController@alipayReturn')->name('payment.alipay.return');
 });
 
 // 无需登陆 认证
@@ -50,3 +54,5 @@ Route::get('/products','ProductsController@index')->name('products.index');
 
 // 商品详情页
 Route::get('/products/{product}','ProductsController@show')->name('products.show');
+// 支付宝异步回调
+Route::post('payment/alipay/notify','PaymentController@alipayNotify')->name('payment.alipay.notify');

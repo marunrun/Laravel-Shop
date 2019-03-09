@@ -51,9 +51,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-
+        /**
+         *  注册支付宝支付的服务容器
+         *  使用app('alipay') 使用
+         */
         $this->app->singleton('alipay',function () {
             $config = config('pay.alipay');
+
+            // 支付宝的验证url
+//            $config['notify_url'] = route('payment.alipay.notify');
+            $config['notify_url'] = 'http://requestbin.fullcontact.com/thx9j8th';
+            // 支付宝的跳转url
+            $config['return_url'] = route('payment.alipay.return');
 
             // 判断当前项目运行环境是否为线上环境
             if (app()->environment() !== 'production') {
@@ -66,6 +75,11 @@ class AppServiceProvider extends ServiceProvider
             return Pay::alipay($config);
         });
 
+
+        /**
+         *  注册支付宝支付的服务容器
+         *  使用app('wechat_pay') 使用
+         */
         $this->app->singleton('wechat_pay',function () {
             $config = config('pay.wechat');
 
