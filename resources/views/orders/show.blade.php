@@ -81,6 +81,7 @@
                             @if(!$order->paid_at && !$order->closed)
                                 <div class="payment-buttons">
                                     <a href="{{ route('payment.alipay',['order' => $order->id]) }}" class="btn btn-primary btn-sm">支付宝支付</a>
+                                    <a href="{{ route('payment.wechat',['order' => $order->id]) }}" class="btn btn-success btn-sm">微信支付</a>
                                 </div>
                             @endif
                         </div>

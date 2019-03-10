@@ -45,6 +45,7 @@ Route::group(['middleware' => ['auth','verified']],function () {
     // 支付相关
     Route::get('payment/{order}/alipay','PaymentController@payByAlipay')->name('payment.alipay');
     Route::get('payment/alipay/return','PaymentController@alipayReturn')->name('payment.alipay.return');
+    Route::get('payment/{order}/wechat','PaymentController@payByWechat')->name('payment.wechat');
 });
 
 // 无需登陆 认证
@@ -56,3 +57,5 @@ Route::get('/products','ProductsController@index')->name('products.index');
 Route::get('/products/{product}','ProductsController@show')->name('products.show');
 // 支付宝异步回调
 Route::post('payment/alipay/notify','PaymentController@alipayNotify')->name('payment.alipay.notify');
+// 微信支付异步回调
+Route::get('payment/wechat/notify','PaymentController@wechatNotify')->name('payment.wechat.notify');

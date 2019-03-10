@@ -77,11 +77,13 @@ class AppServiceProvider extends ServiceProvider
 
 
         /**
-         *  注册支付宝支付的服务容器
+         *  注册微信支付的服务容器
          *  使用app('wechat_pay') 使用
          */
         $this->app->singleton('wechat_pay',function () {
             $config = config('pay.wechat');
+            // 回调地址
+            $config['notify_url'] = 'http://requestbin.fullcontact.com/[替换成你自己的url]';
 
             // 判断当前项目运行环境是否为线上环境
             if (app()->environment() !== 'production') {
