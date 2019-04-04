@@ -41,11 +41,13 @@ Route::group(['middleware' => ['auth','verified']],function () {
     Route::post('order','OrdersController@store')->name('orders.store');
     Route::get('order','OrdersController@index')->name('orders.index');
     Route::get('order/{order}','OrdersController@show')->name('orders.show');
+    Route::post('orders/{order}/received', 'OrdersController@received')->name('orders.received');
 
     // 支付相关
     Route::get('payment/{order}/alipay','PaymentController@payByAlipay')->name('payment.alipay');
     Route::get('payment/alipay/return','PaymentController@alipayReturn')->name('payment.alipay.return');
     Route::get('payment/{order}/wechat','PaymentController@payByWechat')->name('payment.wechat');
+
 });
 
 // 无需登陆 认证
