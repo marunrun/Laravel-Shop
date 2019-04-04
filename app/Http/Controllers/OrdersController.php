@@ -4,14 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
 use App\Http\Requests\OrderRequest;
-use App\Jobs\CloseOrder;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\ProductSku;
 use App\Models\UserAddress;
-use App\Services\CartService;
 use App\Services\OrderService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class OrdersController extends Controller
@@ -47,10 +42,37 @@ class OrdersController extends Controller
     }
 
 
+    /**
+     *  展示订单详情
+     * @param Order $order
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function show(Order $order, Request $request)
     {
         $this->authorize('own',$order);
 
         return view('orders.show',['order' => $order->load(['items.productSku', 'items.product'])]);
+    }
+
+
+    /** 确认收货
+     * @param Order $order
+     * @param Request $request
+     */
+    public function received(Order $order, Request $request)
+    {
+        $this->authorize('own',$order);
+
+        // 判断当前订单是否已发货
+        if ($order->ship_status !== Order::SHIP_STATUS_DELIVERED){
+            throw new InvalidRequestException('发货状态不正确');
+        }
+
+        // 更新发货状态为已收货
+        $order->update(['ship_status' => Order::SHIP_STATUS_RECEIVED]);
+        // 返回
+        return $order;
     }
 }
