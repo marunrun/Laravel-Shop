@@ -159,6 +159,14 @@ class OrdersController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * 申请退款
+     * @param Order $order
+     * @param ApplyRefundRequest $request
+     * @return Order
+     * @throws InvalidRequestException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function applyRefund(Order $order, ApplyRefundRequest $request)
     {
         $this->authorize('own', $order);
