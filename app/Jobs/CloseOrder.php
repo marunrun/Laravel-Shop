@@ -15,10 +15,12 @@ class CloseOrder implements ShouldQueue
 
     protected $order;
 
+    public $tries = 5;
+
     /**
-     * Create a new job instance.
-     *
-     * @return void
+     * CloseOrder constructor.
+     * @param Order $order
+     * @param $delay
      */
     public function __construct(Order $order, $delay)
     {
@@ -27,8 +29,12 @@ class CloseOrder implements ShouldQueue
         $this->delay($delay);
     }
 
-    // 定义这个任务类具体的执行逻辑
-    // 当队列处理器从队列中取出任务时，会调用 handle() 方法
+    /**
+     *
+     * 定义这个任务类具体的执行逻辑
+     * 当队列处理器从队列中取出任务时，会调用 handle() 方法
+     * @throws \Throwable
+     */
     public function handle()
     {
         if ($this->order->paid_at) {

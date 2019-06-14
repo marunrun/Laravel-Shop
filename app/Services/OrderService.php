@@ -9,7 +9,7 @@
 namespace App\Services;
 
 
-use App\Http\Requests\Request;
+use App\Exceptions\InvalidRequestException;
 use App\Jobs\CloseOrder;
 use App\Models\Order;
 use App\Models\ProductSku;
@@ -79,7 +79,7 @@ class OrderService
 
 
         // 延迟任务 30 分钟后关闭未付款订单
-        dispatch(new CloseOrder($order, config('app.order_ttl')));
+        dispatch(new CloseOrder($order, config('shop.order_ttl',1800)));
 
         return $order;
     }

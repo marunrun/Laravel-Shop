@@ -39,11 +39,13 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
 
     // 订单相关
     Route::get('order/{order}/review','OrdersController@review')->name('orders.review.show');
-    Route::post('order/{order}/review','OrdersController@sendReview')->name('orders.review.store');
-    Route::post('order', 'OrdersController@store')->name('orders.store');
-    Route::get('order', 'OrdersController@index')->name('orders.index');
-    Route::get('order/{order}', 'OrdersController@show')->name('orders.show');
-    Route::post('orders/{order}/received', 'OrdersController@received')->name('orders.received');
+    Route::post('order/{order}/review','OrdersController@sendReview')->name('orders.review.store'); // 订单评价
+    Route::post('order', 'OrdersController@store')->name('orders.store'); // 创建订单
+    Route::get('order', 'OrdersController@index')->name('orders.index');  // 订单列表
+    Route::get('order/{order}', 'OrdersController@show')->name('orders.show'); // 订单详情
+    Route::post('orders/{order}/received', 'OrdersController@received')->name('orders.received'); // 订单确认收货
+    Route::post('orders/{order}/apply_refund','OrdersController@applyRefund')->name('orders.apply_refund'); // 订单退款
+
 
     // 支付相关
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');

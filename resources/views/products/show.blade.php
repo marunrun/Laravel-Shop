@@ -57,7 +57,7 @@
                     </div>
                     <div class="product-detail">
                         <ul class="nav nav-tabs" role="tablist">
-                            <li class="nav-item">
+                            <li class="nav-item active">
                                 <a href="#product-detail-tab" class="nav-link active" aria-controls="product-detail-tab"
                                    role="tab" data-toggle="tab" aria-selected="true">商品详情</a>
                             </li>
@@ -67,7 +67,7 @@
                             </li>
                         </ul>
                         <div class="tab-content">
-                            <div role="tabpanel" class="btn-pane active" id="product-detail-tab">
+                            <div role="tabpanel" class="tab-pane active" id="product-detail-tab">
                                 {!! $product->description !!}
                             </div>
                             <div role="tabpanel" class="tab-pane" id="product-reviews-tab">
