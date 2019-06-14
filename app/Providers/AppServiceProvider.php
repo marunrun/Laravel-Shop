@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use App\Facade\TokenClass;
-use function foo\func;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Monolog\Logger;
@@ -59,7 +58,7 @@ class AppServiceProvider extends ServiceProvider
 
             // 支付宝的验证url
 //            $config['notify_url'] = route('payment.alipay.notify');
-            $config['notify_url'] = 'http://requestbin.fullcontact.com/thx9j8th';
+            $config['notify_url'] = 'http://requestbin.fullcontact.com/13g5h441';
             // 支付宝的跳转url
             $config['return_url'] = route('payment.alipay.return');
 
@@ -99,5 +98,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('Token', function () {
             return new TokenClass();
         });
+
+
+        if ($this->app->environment() == 'local') {
+            $this->app->register(\Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class);
+            $this->app->register(\Laracasts\Generators\GeneratorsServiceProvider::class);
+        }
+
     }
 }

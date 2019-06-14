@@ -15,3 +15,7 @@ yarn-error.log
 public/mix-manifest.json
 public/fonts
 /storage
+
+.*.meta.php
+_ide_helper*.php
+*.cache

@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
-use App\Facade\Token;
+use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\ProductSku;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use PhpParser\Node\Stmt\Throw_;
 
 class ProductsController extends Controller
 {
@@ -18,37 +17,37 @@ class ProductsController extends Controller
     public function index(Request $request)
     {
         // 创建一个查询构建器
-        $builder = Product::query()->where('on_sale',true);
+        $builder = Product::query()->where('on_sale', true);
 
         // 模糊搜索 商品标题 描述  sku标题 sku描述
-        if ($search = $request->get('search','')) {
+        if ($search = $request->get('search', '')) {
             $like = '%'.$search.'%';
-            $builder->where(function ($query) use ($like){
-                $query->where('title','like',$like)
-                    ->orWhere('description','like',$like)
-                    ->orWhereHas('skus',function ($query) use ($like){
-                        $query->where('title','like',$like)
-                            ->orWhere('description','like',$like);
+            $builder->where(function (Builder $query) use ($like) {
+                $query->where('title', 'like', $like)
+                    ->orWhere('description', 'like', $like)
+                    ->orWhereHas('skus', function (Builder $query) use ($like) {
+                        $query->where('title', 'like', $like)
+                            ->orWhere('description', 'like', $like);
                     });
             });
         }
         // 是否有提交 order 参数 如果有 就赋值给$order
-        if ($order = $request->get('order','')){
-            if (preg_match('/^(.+)_(asc|desc)$/',$order,$m)) {
-                if (in_array($m[1],['price','sold_count','rating'])){
-                    $builder->orderBy($m[1],$m[2]);
+        if ($order = $request->get('order', '')) {
+            if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)) {
+                if (in_array($m[1], ['price', 'sold_count', 'rating'])) {
+                    $builder->orderBy($m[1], $m[2]);
                 }
             }
         }
 
         $products = $builder->paginate(16);
 
-        return view('products.index',[
+        return view('products.index', [
             'products' => $products,
-            'filters' => [
+            'filters'  => [
                 'search' => $search,
-                'order' => $order,
-            ]
+                'order'  => $order,
+            ],
         ]);
     }
 
@@ -64,12 +63,21 @@ class ProductsController extends Controller
             throw new InvalidRequestException('商品未上架');
         }
 
-        $favored =  false;
-        if ($user = $request->user()){
+        $favored = false;
+        if ($user = $request->user()) {
             $favored = boolval($user->favoriteProducts()->find($product->id));
         }
 
-        return view('products.show',compact('product','favored'));
+        $reviews = OrderItem::query()
+            ->with(['order.user', 'productSku'])
+            ->whereProductId($product->id)
+            ->whereNotNull('reviewed_at')// 筛选出已评价的
+            ->orderBy('reviewed_at', 'desc')
+            ->limit(10)
+            ->get();
+
+
+        return view('products.show', compact('product', 'favored','reviews'));
     }
 
     /** 收藏商品
@@ -86,6 +94,7 @@ class ProductsController extends Controller
 
 
         $user->favoriteProducts()->attach($product);
+
         return [];
     }
 
@@ -111,6 +120,7 @@ class ProductsController extends Controller
     public function favorites(Request $request)
     {
         $products = $request->user()->favoriteProducts()->paginate(16);
-        return view('products.favorites',compact('products'));
+
+        return view('products.favorites', compact('products'));
     }
 }

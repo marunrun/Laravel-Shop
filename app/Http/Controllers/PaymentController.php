@@ -13,12 +13,11 @@ class PaymentController extends Controller
     /**
      *  使用支付宝网页支付
      * @param Order $order
-     * @param Request $request
      * @return mixed
      * @throws InvalidRequestException
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function payByAlipay(Order $order, Request $request)
+    public function payByAlipay(Order $order)
     {
 
         // 判断当前的订单是否属于当前用户
@@ -57,6 +56,7 @@ class PaymentController extends Controller
     {
 
         $data = app('alipay')->verify();
+
         // 如果订单状态不是成功或者结束，则不走后续的逻辑
         // 所有交易状态：https://docs.open.alipay.com/59/103672
         if (!in_array($data->trade_status,['TRADE_SUCCESS', 'TRADE_FINISHED'])) {
@@ -83,7 +83,7 @@ class PaymentController extends Controller
         // 触发支付事件
         $this->afterPaid($order);
 
-//        \Log::debug('Alipay notify',$data->all());
+        \Log::debug('Alipay notify',$data->all());
 
         return app('alipay')->success();
     }

@@ -38,6 +38,8 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::delete('cart/{sku}', 'CartItemsController@remove')->name('cart.remove');
 
     // 订单相关
+    Route::get('order/{order}/review','OrdersController@review')->name('orders.review.show');
+    Route::post('order/{order}/review','OrdersController@sendReview')->name('orders.review.store');
     Route::post('order', 'OrdersController@store')->name('orders.store');
     Route::get('order', 'OrdersController@index')->name('orders.index');
     Route::get('order/{order}', 'OrdersController@show')->name('orders.show');

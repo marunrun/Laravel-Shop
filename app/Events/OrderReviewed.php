@@ -11,7 +11,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class OrderPaid
+class OrderReviewed
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -26,7 +26,6 @@ class OrderPaid
     {
         $this->order = $order;
     }
-
 
     public function getOrder()
     {
