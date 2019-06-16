@@ -3,6 +3,7 @@
 namespace App\Admin\Controllers;
 
 use App\Exceptions\InvalidRequestException;
+use App\Http\Requests\Admin\HandleRefundRequest;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Http\Controllers\Controller;
@@ -24,9 +25,11 @@ class OrderController extends Controller
     }
 
     /**
-     * 展示订单详情
-     * @param mixed $order 订单的id
+     * 展示订单详情.
+     *
+     * @param mixed   $order   订单的id
      * @param Content $content
+     *
      * @return Content
      */
     public function show(Order $order, Content $content)
@@ -34,13 +37,12 @@ class OrderController extends Controller
         return $content
             ->header('订单')
             ->description('详情')
-            ->body(view('admin.orders.show',['order'=>$order]));
+            ->body(view('admin.orders.show', ['order' => $order]));
     }
-
 
     protected function grid()
     {
-        $grid = new Grid(new Order);
+        $grid = new Grid(new Order());
 
         $grid->model()->whereNotNull('paid_at')->orderBy('paid_at', 'desc');
 
@@ -65,39 +67,62 @@ class OrderController extends Controller
             $tools->batch(function ($batch) {
                 $batch->disableDelete();
             });
-
         });
+
         return $grid;
     }
 
+    /**
+     * @param Order   $order
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     *
+     * @throws InvalidRequestException
+     * @throws \Illuminate\Validation\ValidationException
+     */
     public function ship(Order $order, Request $request)
     {
         // 判断当前订单是否支付
-        if (!$order->paid_at){
+        if (!$order->paid_at) {
             throw new InvalidRequestException('该订单未支付');
         }
 
         // 判断当前订单发货状态是否为未发货
-        if ($order->ship_status != Order::SHIP_STATUS_PENDING){
+        if (Order::SHIP_STATUS_PENDING != $order->ship_status) {
             throw new InvalidRequestException('该订单已发货');
         }
 
-
         // Laravel 5.5 之后 validate 返回校验过的值
-        $data = $this->validate($request,[
+        $data = $this->validate($request, [
             'express_company' => ['required'],
-            'express_no'    =>['required'],
-        ], [],[
+            'express_no' => ['required'],
+        ], [], [
             'express_company' => '物流公司',
-            'express_no'    => '物流单号'
+            'express_no' => '物流单号',
         ]);
         // 更改发货状态为已发货
         $order->update([
             'ship_status' => Order::SHIP_STATUS_DELIVERED,
-            'ship_data' => $data
+            'ship_data' => $data,
         ]);
 
         // 返回上一页
         return redirect()->back();
+    }
+
+    public function handleRefund(Order $order, HandleRefundRequest $request)
+    {
+        // 判断订单状态是否正确
+        if (Order::REFUND_STATUS_PENDING !== $order->refund_status) {
+            throw new InvalidRequestException('订单状态不正确');
+        }
+
+        // 是否同意退款
+        if ($request->input('agree')) {
+            //TODO 同意退款后的操作
+        } else {
+            
+        }
     }
 }
