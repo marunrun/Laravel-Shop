@@ -15,7 +15,13 @@ class OrderController extends Controller
 {
     use HasResourceActions;
 
-    /*** 列表*/
+    /**
+     * 列表.
+     *
+     * @param Content $content
+     *
+     * @return Content
+     */
     public function index(Content $content)
     {
         return $content
@@ -27,13 +33,14 @@ class OrderController extends Controller
     /**
      * 展示订单详情.
      *
-     * @param mixed   $order   订单的id
+     * @param mixed $order 订单的id
      * @param Content $content
      *
      * @return Content
      */
     public function show(Order $order, Content $content)
     {
+
         return $content
             ->header('订单')
             ->description('详情')
@@ -73,7 +80,7 @@ class OrderController extends Controller
     }
 
     /**
-     * @param Order   $order
+     * @param Order $order
      * @param Request $request
      *
      * @return \Illuminate\Http\RedirectResponse
@@ -96,25 +103,32 @@ class OrderController extends Controller
         // Laravel 5.5 之后 validate 返回校验过的值
         $data = $this->validate($request, [
             'express_company' => ['required'],
-            'express_no' => ['required'],
+            'express_no'      => ['required'],
         ], [], [
             'express_company' => '物流公司',
-            'express_no' => '物流单号',
+            'express_no'      => '物流单号',
         ]);
         // 更改发货状态为已发货
         $order->update([
             'ship_status' => Order::SHIP_STATUS_DELIVERED,
-            'ship_data' => $data,
+            'ship_data'   => $data,
         ]);
 
         // 返回上一页
         return redirect()->back();
     }
 
+    /**
+     * 是否同意退款
+     * @param Order $order
+     * @param HandleRefundRequest $request
+     * @return Order
+     * @throws InvalidRequestException
+     */
     public function handleRefund(Order $order, HandleRefundRequest $request)
     {
         // 判断订单状态是否正确
-        if (Order::REFUND_STATUS_PENDING !== $order->refund_status) {
+        if (Order::REFUND_STATUS_APPLIED !== $order->refund_status) {
             throw new InvalidRequestException('订单状态不正确');
         }
 
@@ -122,7 +136,16 @@ class OrderController extends Controller
         if ($request->input('agree')) {
             //TODO 同意退款后的操作
         } else {
-            
+            // 拒绝退款 ， 将拒绝退款的理由放在extra中
+            $extra                           = $order->extra ?: [];
+            $extra['refund_disagree_reason'] = $request->input('reason');
+            // 将订单的状态改成未退款
+            $order->update([
+                'refund_status' => Order::REFUND_STATUS_PENDING,
+                'extra'         => $extra,
+            ]);
         }
+
+        return $order;
     }
 }

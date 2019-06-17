@@ -41,7 +41,7 @@
             @endforeach
             <tr>
                 <td>订单金额：</td>
-                <td colspan="3">￥ {{ $order->total_amount }}</td>
+                <td >￥ {{ $order->total_amount }}</td>
                 <td>发货状态：</td>
                 <td>{{ \App\Models\Order::$shipStatusMap[$order->ship_status] }}</td>
             </tr>
@@ -82,7 +82,67 @@
                     <td>{{ $order->ship_data['express_no'] }}</td>
                 </tr>
             @endif
+            {{-- 退款信息显示 --}}
+            @if($order->refund_status !== \App\Models\Order::REFUND_STATUS_PENDING)
+                <tr>
+                    <td>退款状态：</td>
+                    <td colspan="2">{{ \App\Models\Order::$refundStatusMap[$order->refund_status] }}, 理由: {{ $order->extra['refund_reason'] }}</td>
+                    <td>
+                        {{-- 如果订单退款状态是已申请，则展示处理按钮 --}}
+                        @if($order->refund_status === \App\Models\Order::REFUND_STATUS_APPLIED)
+                            <button class="btn btn-sm btn-success" id="btn-refund-agree">同意</button>
+                            <button class="btn btn-sm btn-danger" id="btn-refund-disagree">不同意</button>
+                        @endif
+                    </td>
+                </tr>
+            @endif
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+    $(function ($) {
+        $('#btn-refund-disagree').click(function () {
+            swal({
+                title:'输入拒绝退款的原因',
+                input: 'text',
+                showCancelButton: true,
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                showLoaderOnConfirm: true,
+                preConfirm: function (inputValue) {
+                    if (!inputValue) {
+                        swal('理由不能为空','','error');
+                        return false;
+                    }
+
+                    return $.ajax({
+                        url: '{{ route('admin.orders.handle_refund',[$order->id]) }}',
+                        type: 'POST',
+                        data: JSON.stringify({ // 将请求变成 json 字符串
+                            agree: false,
+                            reason: inputValue,
+                            // 带上 CSRF TOKEN  使用LA.TOKEN
+                            _token: LA.token
+                        }),
+                        contentType: 'application/json', // 请求的数据格式为JSON
+                    });
+                },
+                allowOutsideClick: false
+            }).then(function (ret) {
+                // 如果用户点了取消
+                if (ret.dismiss === 'cancel') {
+                    return false;
+                }
+                swal({
+                    title: '操作成功',
+                    type: 'success'
+                }).then(function () {
+                    location.reload()
+                })
+            })
+        });
+    });
+
+</script>
