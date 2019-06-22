@@ -40,7 +40,6 @@ class OrderController extends Controller
      */
     public function show(Order $order, Content $content)
     {
-
         return $content
             ->header('订单')
             ->description('详情')
@@ -119,11 +118,17 @@ class OrderController extends Controller
     }
 
     /**
-     * 是否同意退款
+     * 是否同意退款.
+     *
      * @param Order $order
      * @param HandleRefundRequest $request
+     *
      * @return Order
+     *
      * @throws InvalidRequestException
+     * @throws \Yansongda\Pay\Exceptions\GatewayException
+     * @throws \Yansongda\Pay\Exceptions\InvalidConfigException
+     * @throws \Yansongda\Pay\Exceptions\InvalidSignException
      */
     public function handleRefund(Order $order, HandleRefundRequest $request)
     {
@@ -134,10 +139,15 @@ class OrderController extends Controller
 
         // 是否同意退款
         if ($request->input('agree')) {
-            //TODO 同意退款后的操作
+            // 清空 拒绝退款理由
+            $extra = $order->extra ?: [];
+            unset($extra['refund_disagree_reason']);
+
+            $order->update(compact('extra'));
+            $this->_refundOrder($order);
         } else {
             // 拒绝退款 ， 将拒绝退款的理由放在extra中
-            $extra                           = $order->extra ?: [];
+            $extra = $order->extra ?: [];
             $extra['refund_disagree_reason'] = $request->input('reason');
             // 将订单的状态改成未退款
             $order->update([
@@ -147,5 +157,52 @@ class OrderController extends Controller
         }
 
         return $order;
+    }
+
+    /**
+     * 同意退款
+     * @param Order $order
+     * @throws InvalidRequestException
+     * @throws \Yansongda\Pay\Exceptions\GatewayException
+     * @throws \Yansongda\Pay\Exceptions\InvalidConfigException
+     * @throws \Yansongda\Pay\Exceptions\InvalidSignException
+     * @throws \Exception
+     */
+    protected function _refundOrder(Order $order)
+    {
+        switch ($order->payment_method) {
+            case 'wechat':
+                // TODO 微信退款
+                break;
+            case 'alipay':
+                $refundNo = Order::getAvailableRefundNo();
+
+                $res = app('alipay')->refund([
+                    'out_trade_no'   => $order->no, // 之前的订单流水号
+                    'refund_amount'  => $order->total_amount, // 退款金额，单位元
+                    'out_request_no' => $refundNo, // 退款订单号
+                ]);
+
+                // 如果返回值里有sub_code 字段 说明退款失败
+                if ($res->sub_code) {
+                    // 将退款失败字段保存到extra中
+                    $extra = $order->extra ?: [];
+                    $extra['refund_failed_code'] = $res->sub_code;
+                    $order->update([
+                        'refund_no'     => $refundNo,
+                        'refund_status' => Order::REFUND_STATUS_FAILED,
+                        'extra'         => $extra,
+                    ]);
+                } else {
+                    $order->update([
+                        'refund_no'     => $refundNo,
+                        'refund_status' => Order::REFUND_STATUS_SUCCESS
+                    ]);
+                }
+                break;
+            default:
+                throw new InvalidRequestException('未知订单付款方式:' . $order->payment_method);
+                break;
+        }
     }
 }

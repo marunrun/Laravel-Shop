@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Ramsey\Uuid\Uuid;
 
 /**
  * App\Models\Order
@@ -158,5 +159,20 @@ class Order extends Model
         \Log::warning('find order no failed');
 
         return false;
+    }
+
+    /**
+     * 生成退款单号
+     * @return string
+     * @throws \Exception
+     */
+    public static function getAvailableRefundNo()
+    {
+        do{
+            $no = Uuid::uuid4()->getHex();
+
+        }while(self::query()->where('refund_no', $no)->exists());
+
+        return $no;
     }
 }

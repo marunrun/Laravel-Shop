@@ -41,7 +41,7 @@
             @endforeach
             <tr>
                 <td>订单金额：</td>
-                <td >￥ {{ $order->total_amount }}</td>
+                <td>￥ {{ $order->total_amount }}</td>
                 <td>发货状态：</td>
                 <td>{{ \App\Models\Order::$shipStatusMap[$order->ship_status] }}</td>
             </tr>
@@ -53,7 +53,8 @@
                             {{ csrf_field() }}
                             <div class="form-group {{ $errors->has('express_company') ? 'has-error' : '' }}">
                                 <label for="express_company" class="control-label">物流公司</label>
-                                <input type="text" id="express_company" name="express_company" value="" class="form-control" placeholder="输入物流公司">
+                                <input type="text" id="express_company" name="express_company" value=""
+                                       class="form-control" placeholder="输入物流公司">
                                 @if($errors->has('express_company'))
                                     @foreach($errors->get('express_company') as $msg)
                                         <span class="help-block">{{ $msg }}</span>
@@ -62,7 +63,8 @@
                             </div>
                             <div class="form-group {{ $errors->has('express_no') ? 'has-error' : '' }}">
                                 <label for="express_no" class="control-label">物流单号</label>
-                                <input type="text" id="express_no" name="express_no" value="" class="form-control" placeholder="输入物流单号">
+                                <input type="text" id="express_no" name="express_no" value="" class="form-control"
+                                       placeholder="输入物流单号">
                                 @if($errors->has('express_no'))
                                     @foreach($errors->get('express_no') as $msg)
                                         <span class="help-block">{{ $msg }}</span>
@@ -86,7 +88,8 @@
             @if($order->refund_status !== \App\Models\Order::REFUND_STATUS_PENDING)
                 <tr>
                     <td>退款状态：</td>
-                    <td colspan="2">{{ \App\Models\Order::$refundStatusMap[$order->refund_status] }}, 理由: {{ $order->extra['refund_reason'] }}</td>
+                    <td colspan="2">{{ \App\Models\Order::$refundStatusMap[$order->refund_status] }},
+                        理由: {{ $order->extra['refund_reason'] }}</td>
                     <td>
                         {{-- 如果订单退款状态是已申请，则展示处理按钮 --}}
                         @if($order->refund_status === \App\Models\Order::REFUND_STATUS_APPLIED)
@@ -103,9 +106,10 @@
 
 <script>
     $(function ($) {
+        // 不同意退款
         $('#btn-refund-disagree').click(function () {
             swal({
-                title:'输入拒绝退款的原因',
+                title: '输入拒绝退款的原因',
                 input: 'text',
                 showCancelButton: true,
                 confirmButtonText: '确认',
@@ -113,7 +117,7 @@
                 showLoaderOnConfirm: true,
                 preConfirm: function (inputValue) {
                     if (!inputValue) {
-                        swal('理由不能为空','','error');
+                        swal('理由不能为空', '', 'error');
                         return false;
                     }
 
@@ -143,6 +147,43 @@
                 })
             })
         });
+
+        // 同意退款
+        $('#btn-refund-agree').click(function () {
+            swal({
+                title: '确定要将款项退还给用户？',
+                type: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                showLoaderOnConfirm: true,
+                preConfirm: function () {
+                    return $.ajax({
+                        url: '{{ route('admin.orders.handle_refund',[$order->id]) }}',
+                        type: 'POST',
+                        data: JSON.stringify({ // 将请求变成 json 字符串
+                            agree: true,
+                            // 带上 CSRF TOKEN  使用LA.TOKEN
+                            _token: LA.token
+                        }),
+                        contentType: 'application/json', // 请求的数据格式为JSON
+                    });
+                },
+                allowOutsideClick: false
+            }).then(function (ret) {
+                // 如果用户点了取消
+                if (ret.dismiss === 'cancel') {
+                    return false;
+                }
+                swal({
+                    title: '操作成功',
+                    type: 'success'
+                }).then(function () {
+                    location.reload()
+                })
+            })
+        })
+
     });
 
 </script>

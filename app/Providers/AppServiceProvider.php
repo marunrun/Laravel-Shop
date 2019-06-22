@@ -10,11 +10,6 @@ use Yansongda\Pay\Pay;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
     public function boot()
     {
         // 新增phone表单验证
@@ -22,48 +17,54 @@ class AppServiceProvider extends ServiceProvider
             $regex = '/^((13[0-9])|(14[5,7])|(15[0-3,5-9])|(17[0,3,5-8])|(18[0-9])|166|198|199|(147))\\d{8}$/';
 
             $res = preg_match($regex, $value);
+
             return (bool)$res;
         });
 
-        // 监听sql语句
-        \DB::listen(function ($query) {
-            $tmp = str_replace('?', '"' . '%s' . '"', $query->sql);
-            $qBindings = [];
-            foreach ($query->bindings as $key => $value) {
-                if (is_numeric($key)) {
-                    $qBindings[] = $value;
-                } else {
-                    $tmp = str_replace(':' . $key, '"' . $value . '"', $tmp);
+        if ('local' === $this->app->environment()) {
+            // 监听sql语句
+            \DB::listen(function ($query) {
+                $tmp = str_replace('?', '"' . '%s' . '"', $query->sql);
+                $qBindings = [];
+                foreach ($query->bindings as $key => $value) {
+                    if (is_numeric($key)) {
+                        $qBindings[] = $value;
+                    } else {
+                        $tmp = str_replace(':' . $key, '"' . $value . '"', $tmp);
+                    }
                 }
-            }
-            $tmp = vsprintf($tmp, $qBindings);
-            $tmp = str_replace("\\", "", $tmp);
-            file_put_contents(storage_path('logs' . DIRECTORY_SEPARATOR . date('Y-m-d') . '_query.log'), ' execution time: ' . $query->time . 'ms; ' . $tmp . PHP_EOL, FILE_APPEND);
-        });
+                $tmp = vsprintf($tmp, $qBindings);
+                $tmp = str_replace('\\', '', $tmp);
+                file_put_contents(storage_path(
+                    'logs' . DIRECTORY_SEPARATOR . date('Y-m-d') . '_query.log'),
+                    ' execution time: ' . $query->time . 'ms; ' . $tmp . PHP_EOL,
+                    FILE_APPEND);
+            });
+        }
     }
 
     /**
      * Register any application services.
-     *
-     * @return void
      */
     public function register()
     {
-        /**
+        /*
          *  注册支付宝支付的服务容器
          *  使用app('alipay') 使用
          */
         $this->app->singleton('alipay', function () {
             $config = config('pay.alipay');
 
+            $uri = app('router')->getRoutes()->getByName('payment.alipay.notify')->uri;
+
+            $config['notify_url'] = config('shop.url').$uri;
+
             // 支付宝的验证url
-//            $config['notify_url'] = route('payment.alipay.notify');
-            $config['notify_url'] = 'http://requestbin.fullcontact.com/13g5h441';
             // 支付宝的跳转url
             $config['return_url'] = route('payment.alipay.return');
 
             // 判断当前项目运行环境是否为线上环境
-            if (app()->environment() !== 'production') {
+            if ('production' !== app()->environment()) {
                 $config['mode'] = 'dev';
                 $config['log']['level'] = Logger::DEBUG;
             } else {
@@ -73,8 +74,7 @@ class AppServiceProvider extends ServiceProvider
             return Pay::alipay($config);
         });
 
-
-        /**
+        /*
          *  注册微信支付的服务容器
          *  使用app('wechat_pay') 使用
          */
@@ -84,7 +84,7 @@ class AppServiceProvider extends ServiceProvider
             $config['notify_url'] = 'http://requestbin.fullcontact.com/[替换成你自己的url]';
 
             // 判断当前项目运行环境是否为线上环境
-            if (app()->environment() !== 'production') {
+            if ('production' !== app()->environment()) {
                 $config['mode'] = 'dev';
                 $config['log']['level'] = Logger::DEBUG;
             } else {
@@ -94,16 +94,13 @@ class AppServiceProvider extends ServiceProvider
             return Pay::wechat($config);
         });
 
-
         $this->app->singleton('Token', function () {
             return new TokenClass();
         });
 
-
-        if ($this->app->environment() == 'local') {
+        if ('local' == $this->app->environment()) {
             $this->app->register(\Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class);
             $this->app->register(\Laracasts\Generators\GeneratorsServiceProvider::class);
         }
-
     }
 }

@@ -12,6 +12,7 @@ class ProductsController extends Controller
 {
     /** 首页
      * @param Request $request
+     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function index(Request $request)
@@ -21,7 +22,7 @@ class ProductsController extends Controller
 
         // 模糊搜索 商品标题 描述  sku标题 sku描述
         if ($search = $request->get('search', '')) {
-            $like = '%'.$search.'%';
+            $like = '%' . $search . '%';
             $builder->where(function (Builder $query) use ($like) {
                 $query->where('title', 'like', $like)
                     ->orWhere('description', 'like', $like)
@@ -54,7 +55,9 @@ class ProductsController extends Controller
     /** 商品详情页面
      * @param Product $product
      * @param Request $request
+     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     *
      * @throws InvalidRequestException
      */
     public function show(Product $product, Request $request)
@@ -76,13 +79,13 @@ class ProductsController extends Controller
             ->limit(10)
             ->get();
 
-
-        return view('products.show', compact('product', 'favored','reviews'));
+        return view('products.show', compact('product', 'favored', 'reviews'));
     }
 
     /** 收藏商品
      * @param Product $product
      * @param Request $request
+     *
      * @return array
      */
     public function favor(Product $product, Request $request)
@@ -91,7 +94,6 @@ class ProductsController extends Controller
         if ($user->favoriteProducts()->find($product->id)) {
             return [];
         }
-
 
         $user->favoriteProducts()->attach($product);
 
@@ -113,8 +115,10 @@ class ProductsController extends Controller
     }
 
     /**
-     *  我的收藏列表
+     *  我的收藏列表.
+     *
      * @param Request $request
+     *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function favorites(Request $request)
