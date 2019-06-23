@@ -46,6 +46,7 @@
                 <td>{{ \App\Models\Order::$shipStatusMap[$order->ship_status] }}</td>
             </tr>
             @if($order->ship_status === \App\Models\Order::SHIP_STATUS_PENDING)
+                @if($order->refund_status !== \App\Models\Order::REFUND_STATUS_SUCCESS)
                 <tr>
                     <td colspan="4">
                         <form action="{{ route('admin.orders.ship', [$order->id]) }}" method="post" class="form-inline">
@@ -83,6 +84,7 @@
                     <td>物流单号：</td>
                     <td>{{ $order->ship_data['express_no'] }}</td>
                 </tr>
+                @endif
             @endif
             {{-- 退款信息显示 --}}
             @if($order->refund_status !== \App\Models\Order::REFUND_STATUS_PENDING)
