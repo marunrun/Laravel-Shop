@@ -8,7 +8,6 @@ use Encore\Admin\Controllers\HasResourceActions;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Layout\Content;
-use Encore\Admin\Show;
 
 class CouponCodesController extends Controller
 {
@@ -39,8 +38,8 @@ class CouponCodesController extends Controller
     public function edit($id, Content $content)
     {
         return $content
-            ->header('Edit')
-            ->description('description')
+            ->header('编辑优惠卷')
+//            ->description('description')
             ->body($this->form()->edit($id));
     }
 
@@ -54,8 +53,8 @@ class CouponCodesController extends Controller
     public function create(Content $content)
     {
         return $content
-            ->header('Create')
-            ->description('description')
+            ->header('新增优惠券')
+            ->description('')
             ->body($this->form());
     }
 
@@ -73,25 +72,20 @@ class CouponCodesController extends Controller
         $grid->id('Id')->sortable();
         $grid->name('名称');
         $grid->code('优惠码');
-        $grid->type('类型')->display(function ($value) {
-            return CouponCode::$typeMap[$value];
+        $grid->description('描述');
+        $grid->column('usage', '用量')->display(function () {
+            return "{$this->used} / {$this->total}";
         });
-        $grid->value('折扣')->display(function ($value) {
-            return $this->type === CouponCode::TYPE_PERCENT ? '￥'.$value : '%'.$value;
-        });
-        $grid->min_amount('最低金额');
-        $grid->total('总量');
-        $grid->used('已用');
-        $grid->enable('是否启用')->display(function ($value){
+        $grid->enabled('是否启用')->display(function ($value) {
             return $value ? '是' : '否';
         });
         $grid->created_at('创建时间');
-        $grid->actions(function ($actions){
+        $grid->actions(function ($actions) {
             $actions->disableView();
         });
+
         return $grid;
     }
-
 
     /**
      * Make a form builder.
@@ -102,16 +96,41 @@ class CouponCodesController extends Controller
     {
         $form = new Form(new CouponCode());
 
-        $form->text('name', 'Name');
-        $form->text('code', 'Code');
-        $form->text('type', 'Type');
-        $form->decimal('value', 'Value');
-        $form->number('total', 'Total');
-        $form->number('used', 'Used');
-        $form->decimal('min_amount', 'Min amount');
-        $form->datetime('not_before', 'Not before')->default(date('Y-m-d H:i:s'));
-        $form->datetime('not_after', 'Not after')->default(date('Y-m-d H:i:s'));
-        $form->switch('enable', 'Enable');
+        $form->display('id','ID');
+        $form->text('name', '名称')->rules('required');
+        $form->text('code', '优惠码')->rules(function ($form) {
+            // 如果form->model()->id  不为空, 代表是编辑操作
+            if ($id = $form->model()->id) {
+                return 'nullable|unique:coupon_codes,code,'.$id.',id';
+            }else{
+                return 'nullable|unique:coupon_codes';
+            }
+        });
+        $form->radio('type', '类型')
+            ->options(CouponCode::$typeMap)
+            ->rules('required')
+            ->default(CouponCode::TYPE_FIXED);
+        $form->decimal('value', '折扣')->rules(function () {
+            if (CouponCode::TYPE_PERCENT === request()->input('type')) {
+                // 如果选择了 百分比, 那么折扣范围只能在1到99之间了
+                return 'required|numeric|between:1,99';
+            } else {
+                // 否则只需要大于等于0.01即可
+                return 'required|numeric|min:0.01';
+            }
+        });
+        $form->number('total', '总量')->rules('required|numeric|min:0');
+        $form->decimal('min_amount', '最低金额')->rules('required|numeric|min:0');
+        $form->datetime('not_before', '开始时间');
+        $form->datetime('not_after', '结束时间');
+        $form->switch('enabled', '启用?');
+
+        // 在保存之前的回调
+        $form->saving(function (Form $form) {
+            if (!$form->code){
+                $form->code = CouponCode::findAvailableCode();
+            }
+        });
 
         return $form;
     }

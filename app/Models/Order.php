@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Ramsey\Uuid\Uuid;
 
 /**
- * App\Models\Order
+ * App\Models\Order.
  *
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\OrderItem[] $items
- * @property-read \App\Models\User $user
+ * @property \Illuminate\Database\Eloquent\Collection|\App\Models\OrderItem[] $items
+ * @property \App\Models\User $user
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order query()
@@ -50,6 +50,9 @@ use Ramsey\Uuid\Uuid;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereTotalAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereUserId($value)
+ * @property int|null $coupon_code_id
+ * @property-read \App\Models\CouponCode|null $couponCode
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereCouponCodeId($value)
  */
 class Order extends Model
 {
@@ -120,31 +123,38 @@ class Order extends Model
     {
         return $this->belongsTo(CouponCode::class);
     }
-    
+
     /**
-     *  事件监听
+     *  事件监听.
+     * @inheritdoc
      */
     protected static function boot()
     {
         parent::boot();
 
         // 监听模型创建事件，在写入数据库之前触发
-        static::creating(function ($model) {
-            // 如果不存在订单流水号
-            if (!$model->no) {
-                // 就生成一个
-                $model->no = static::findAvailableNo();
-                // 如果生成失败了，则终止订单的创建
+        static::creating(
+            function ($model) {
+                // 如果不存在订单流水号
                 if (!$model->no) {
-                    return false;
+                    // 就生成一个
+                    $model->no = static::findAvailableNo();
+                    // 如果生成失败了，则终止订单的创建
+                    if (!$model->no) {
+                        return false;
+                    }
                 }
+
+                return true;
             }
-        });
+        );
     }
 
     /**
-     *  生成一个随机的且在数据库中唯一的订单流水号
+     *  生成一个随机的且在数据库中唯一的订单流水号.
+     *
      * @return bool|string
+     *
      * @throws \Exception
      */
     public static function findAvailableNo()
@@ -152,7 +162,7 @@ class Order extends Model
         // 以当前日期时间生成一个前缀
         $prefix = date('YmdHis');
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 10; ++$i) {
             // 随机生成一个6位数字
             $no = $prefix . str_pad(random_int(0, 999999), 6, 0, STR_PAD_LEFT);
             // 判断当前订单号是否存在
@@ -166,17 +176,19 @@ class Order extends Model
         return false;
     }
 
+
     /**
-     * 生成退款单号
+     * 生成退款单号.
+     *
      * @return string
+     *
      * @throws \Exception
      */
     public static function getAvailableRefundNo()
     {
-        do{
+        do {
             $no = Uuid::uuid4()->getHex();
-
-        }while(self::query()->where('refund_no', $no)->exists());
+        } while (self::query()->where('refund_no', $no)->exists());
 
         return $no;
     }
