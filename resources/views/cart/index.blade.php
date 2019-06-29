@@ -73,13 +73,28 @@
                                     </select>
                                 </div>
                                 <div class="col-sm-2">
-                                    <a href="{{ route('user_addresses.create') }}?from={{ Request::path() }} " class="btn btn-outline-primary">新建收获地址</a>
+                                    <a href="{{ route('user_addresses.create') }}?from={{ Request::path() }} "
+                                       class="btn btn-outline-primary">新建收获地址</a>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <label class="col-form-label col-sm-2 text-md-right">备注</label>
                                 <div class="col-sm-8 col-md-7">
                                     <textarea name="remark" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-form-label col-sm-2 text-md-right">优惠码</label>
+                                <div class="col-sm-4">
+                                    <input type="text" name="coupon_code" class="form-control">
+                                    <span class="form-text text-muted" id="coupon_desc"></span>
+                                </div>
+                                <div class="col-sm-2">
+                                    <button type="button" class="btn btn-sm btn-success" id="btn-check-coupon">检查
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" style="display: none;"
+                                            id="btn-cancel-coupon">取消
+                                    </button>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -98,6 +113,7 @@
 
 @section('scriptsAfterJs')
     <script>
+
         $(function () {
 
             // 移除按钮的点击事件
@@ -159,9 +175,10 @@
                 var errMsg;
 
                 var req = {
-                    address_id: $('#order-form').find('select[name=address]').val(),
+                    address_id: $(`#order-form`).find('select[name=address]').val(),
                     items: [],
-                    remark: $('#order-form').find('textarea[name=remark]').val(),
+                    remark: $("#order-form").find('textarea[name=remark]').val(),
+                    coupon_code: $('input[name=coupon_code]').val(),
                 };
                 // 遍历 <table> 标签内所有带有 data-id 属性的 <tr> 标签，也就是每一个购物车中的商品 SKU
                 $('table tr[data-id]').each(function () {
@@ -189,7 +206,7 @@
 
                 // 如果有错误信息 就直接报错
                 if (errMsg) {
-                    return swal(errMsg,'','error');
+                    return swal(errMsg, '', 'error');
                 }
 
                 // 提交
@@ -197,23 +214,69 @@
                     .then(function (response) {
                         swal('订单提交成功', '', 'success')
                             .then(function () {
-                                location.href='/order/' + response.data.id;
+                                location.href = '/order/' + response.data.id;
                             });
                     }).catch(function (error) {
-                    if (error.response.status == 422) {
-                        // http 状态码为 422 代表用户输入校验失败
-                        var html = '<div>';
-                        _.each(error.response.data.errors, function (errors) {
-                            _.each(errors, function (error) {
-                                html += error + '<br>';
-                            })
-                        });
-                        html += '</div>';
-                        swal({content: $(html)[0], icon: 'error'})
-                    } else {
-                        swal('系统错误', '', 'error');
+                    switch (error.response.status) {
+                        case 422: // http 状态码为 422 代表用户输入校验失败
+                            var html = '<div>';
+                            _.each(error.response.data.errors, function (errors) {
+                                _.each(errors, function (error) {
+                                    html += error + '<br>';
+                                })
+                            });
+                            html += '</div>';
+                            swal({content: $(html)[0], icon: 'error'});
+                            break;
+                        case 403:
+                            swal(error.response.data.msg,'','error');
+                            break;
+                        default:
+                            swal('系统错误', '', 'error');
+                            break;
                     }
                 });
+            });
+
+            // 检查优惠码
+            $('#btn-check-coupon').click(function () {
+                // 获取用户输入的优惠码
+                var code = $('input[name=coupon_code]').val();
+                // 如果没有输入则弹框提示
+                if (!code) {
+                    swal('请输入优惠码', '', 'warning');
+                    return false;
+                }
+
+                // 调用检查接口
+                axios.get('/coupon_codes/' + encodeURIComponent(code))
+                    .then(function (res) {
+                        $('#coupon_desc').text(res.data.description);
+                        $('input[name=coupon_code]').prop('readonly', true);
+                        $('#btn-check-coupon').hide();
+                        $('#btn-cancel-coupon').show();
+                    }, function (error) {
+                        switch (error.response.status) {
+                            case 404:
+                                swal('优惠码不存在', '', 'error');
+                                break;
+                            case 403:
+                                swal(error.response.data.msg, '', 'error');
+                                break;
+                            default:
+                                swal('系统内部错误', '', 'error');
+                                break;
+                        }
+                    })
+
+            });
+
+            // 隐藏 按钮点击事件
+            $('#btn-cancel-coupon').click(function () {
+                $('#coupon_desc').text(''); // 隐藏优惠信息
+                $('input[name=coupon_code]').prop('readonly', false);  // 启用输入框
+                $('#btn-cancel-coupon').hide(); // 隐藏 取消 按钮
+                $('#btn-check-coupon').show(); // 显示 检查 按钮
             });
         });
     </script>

@@ -10,8 +10,12 @@ class InternalException extends Exception
 {
     protected $msgForUser;
 
-    public function __construct(string $message = "",string $msgForUser='系统内部错误',int $code = 0, Throwable $previous = null)
-    {
+    public function __construct(
+        string $message = '',
+        string $msgForUser = '系统内部错误',
+        int $code = 0,
+        Throwable $previous = null
+    ) {
         parent::__construct($message, $code, $previous);
         $this->msgForUser = $msgForUser;
     }

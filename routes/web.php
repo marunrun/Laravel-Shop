@@ -53,7 +53,7 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('payment/{order}/wechat', 'PaymentController@payByWechat')->name('payment.wechat');
 
     // 优惠券
-    Route::get('coupon_codes/{code}', 'CouponCodesController@show')->name('coupon_codes.show');
+    Route::get('coupon_codes/{code}', 'CouponCodeController@show')->name('coupon_codes.show');
 });
 
 // 无需登陆 认证

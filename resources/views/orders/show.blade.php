@@ -80,6 +80,14 @@
                             @endif
                         </div>
                         <div class="order-summary text-right">
+                            {{-- 如果使用了优惠券,展示优惠信息 --}}
+                            @if($order->couponCode)
+                                <div class="text-primary">
+                                    <span>优惠信息:</span>
+                                    <div class="value">{{ $order->couponCode->description }}</div>
+                                </div>
+                            @endif
+
                             <div class="total-amount">
                                 <span>订单总价: </span>
                                 <div class="value">￥{{ $order->total_amount }}</div>
@@ -108,8 +116,10 @@
                             @endif
                             @if(!$order->paid_at && !$order->closed)
                                 <div class="payment-buttons">
-                                    <a href="{{ route('payment.alipay',['order' => $order->id]) }}" class="btn btn-primary btn-sm">支付宝支付</a>
-                                    <a href="{{ route('payment.wechat',['order' => $order->id]) }}" class="btn btn-success btn-sm">微信支付</a>
+                                    <a href="{{ route('payment.alipay',['order' => $order->id]) }}"
+                                       class="btn btn-primary btn-sm">支付宝支付</a>
+                                    <a href="{{ route('payment.wechat',['order' => $order->id]) }}"
+                                       class="btn btn-success btn-sm">微信支付</a>
                                 </div>
                             @endif
                             {{-- 如果订单的发货状态为已发货则展示确认收货按钮 --}}
@@ -133,50 +143,50 @@
 @stop
 
 @section('scriptsAfterJs')
-<script>
-    $(function () {
-       $('#btn-receive').click(function () {
-           // 弹出确认框
-           swal({
-               title:'确认已经收到商品？',
-               icon: 'warning',
-               dangerMode: true,
-               buttons: ['取消','确认收到']
-           })
-           .then(function (ret) {
-               if (!ret){
-                   return;
-               }
-               // ajax
-               axios.post('{{ route('orders.received',[$order->id]) }}')
-                   .then(function () {
-                       location.reload();
-                   })
-           })
-       });
-
-        $('#btn-apply-refund').click(function () {
-            swal({
-                text:'请输入退款理由：',
-                content : 'input'
-            }).then(function (input) {
-                // 当用户点击 swal 弹出框上的按钮时触发这个函数
-                if (!input){
-                    swal('退款理由不可为空','','error');
-                    return;
-                }
-
-                // 请求退款接口
-                axios.post('{{ route('orders.apply_refund',[$order->id]) }}',{reason: input})
-                    .then(function () {
-                        swal('退款申请成功','','success').then(function () {
-                            location.reload()
-                        })
+    <script>
+        $(function () {
+            $('#btn-receive').click(function () {
+                // 弹出确认框
+                swal({
+                    title: '确认已经收到商品？',
+                    icon: 'warning',
+                    dangerMode: true,
+                    buttons: ['取消', '确认收到']
+                })
+                    .then(function (ret) {
+                        if (!ret) {
+                            return;
+                        }
+                        // ajax
+                        axios.post('{{ route('orders.received',[$order->id]) }}')
+                            .then(function () {
+                                location.reload();
+                            })
                     })
+            });
 
-            })
+            $('#btn-apply-refund').click(function () {
+                swal({
+                    text: '请输入退款理由：',
+                    content: 'input'
+                }).then(function (input) {
+                    // 当用户点击 swal 弹出框上的按钮时触发这个函数
+                    if (!input) {
+                        swal('退款理由不可为空', '', 'error');
+                        return;
+                    }
+
+                    // 请求退款接口
+                    axios.post('{{ route('orders.apply_refund',[$order->id]) }}', {reason: input})
+                        .then(function () {
+                            swal('退款申请成功', '', 'success').then(function () {
+                                location.reload()
+                            })
+                        })
+
+                })
+            });
+
         });
-
-    });
-</script>
+    </script>
 @stop

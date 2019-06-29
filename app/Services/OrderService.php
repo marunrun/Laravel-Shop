@@ -3,15 +3,17 @@
  * Created by PhpStorm.
  * User: run
  * Date: 2019/3/2
- * Time: 13:55
+ * Time: 13:55.
  */
 
 namespace App\Services;
 
-
+use App\Exceptions\CouponCodeUnavailableException;
 use App\Exceptions\InvalidRequestException;
 use App\Jobs\CloseOrder;
+use App\Models\CouponCode;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\ProductSku;
 use App\Models\User;
 use App\Models\UserAddress;
@@ -19,15 +21,29 @@ use Carbon\Carbon;
 
 class OrderService
 {
-
-    public function store(User $user, UserAddress $address, $remark, $items)
+    /**
+     * @param User $user
+     * @param UserAddress $address
+     * @param $remark
+     * @param $items
+     *
+     * @param CouponCode|null $coupon
+     * @return mixed
+     *
+     * @throws CouponCodeUnavailableException
+     * @throws \Throwable
+     */
+    public function store(User $user, UserAddress $address, $remark, $items, CouponCode $coupon = null)
     {
-        $order = \DB::transaction(function () use ($user, $address, $remark, $items) {
+        if ($coupon) {
+            $coupon->checkAvailable($user);
+        }
 
+        $order = \DB::transaction(function () use ($user, $address, $remark, $items, $coupon) {
             // 更新地址的最新使用时间
             $address->update(['last_used_at' => Carbon::now()]);
-            // 创建订单
 
+            // 创建订单
             $order = new Order([
                 'address' => [
                     'address' => $address->full_address,
@@ -36,11 +52,10 @@ class OrderService
                     'contact_phone' => $address->contact_phone,
                 ],
                 'remark' => $remark,
-                'total_amount' => 0
+                'total_amount' => 0,
             ]);
 
             // 订单关联到用户
-
             $order->user()->associate($user);
 
             // 写入数据库
@@ -53,9 +68,12 @@ class OrderService
                 $sku = ProductSku::find($data['sku_id']);
                 // 创建一个orderItem 与当前order关联
 
+                /**
+                 * @var OrderItem $item
+                 */
                 $item = $order->items()->make([
                     'amount' => $data['amount'],
-                    'price' => $sku->price
+                    'price' => $sku->price,
                 ]);
                 $item->product()->associate($sku->product_id);
                 $item->productSku()->associate($sku);
@@ -64,6 +82,22 @@ class OrderService
 
                 if ($sku->decreaseStock($data['amount']) <= 0) {
                     throw new InvalidRequestException('该商品库存不足');
+                }
+            }
+
+            if ($coupon) {
+                // 检查当前订单金额是否符合优惠券使用规则
+                $coupon->checkAvailable($user,$totalAmount);
+
+                // 计算优惠后的价格
+                $totalAmount = $coupon->getAdjustedPrice($totalAmount);
+
+                // 将该订单与优惠券关联
+                $order->couponCode()->associate($coupon);
+
+                // 增加优惠券的用量, 需判断返回值
+                if ($coupon->changeUsed() <= 0) {
+                    throw new CouponCodeUnavailableException('该优惠券已被兑完');
                 }
             }
 
@@ -77,9 +111,8 @@ class OrderService
             return $order;
         });
 
-
         // 延迟任务 30 分钟后关闭未付款订单
-        dispatch(new CloseOrder($order, config('shop.order_ttl',1800)));
+        dispatch(new CloseOrder($order, config('shop.order_ttl', 1800)));
 
         return $order;
     }
