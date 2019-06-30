@@ -2,13 +2,13 @@
 
 namespace App\Admin\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use App\Http\Controllers\Controller;
 use Encore\Admin\Controllers\HasResourceActions;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
 use Encore\Admin\Layout\Content;
-use Encore\Admin\Show;
 
 class ProductsController extends Controller
 {
@@ -18,6 +18,7 @@ class ProductsController extends Controller
      * Index interface.
      *
      * @param Content $content
+     *
      * @return Content
      */
     public function index(Content $content)
@@ -28,12 +29,12 @@ class ProductsController extends Controller
             ->body($this->grid());
     }
 
-
     /**
      * Edit interface.
      *
      * @param mixed $id
      * @param Content $content
+     *
      * @return Content
      */
     public function edit($id, Content $content)
@@ -48,6 +49,7 @@ class ProductsController extends Controller
      * Create interface.
      *
      * @param Content $content
+     *
      * @return Content
      */
     public function create(Content $content)
@@ -65,12 +67,12 @@ class ProductsController extends Controller
      */
     protected function grid()
     {
-        $grid = new Grid(new Product);
+        $grid = new Grid(new Product());
 
         $grid->id('Id')->sortable();
         $grid->title('商品名称');
-//        $grid->image('Image');
-        $grid->on_sale('已上架?')->display(function ($value){
+        $grid->column('category.name', '类目');
+        $grid->on_sale('已上架?')->display(function ($value) {
             return $value ? '是' : '否';
         });
 
@@ -80,20 +82,23 @@ class ProductsController extends Controller
         $grid->review_count('评论数');
 
         $grid->actions(function ($actions) {
+
+            /** @var Grid\Displayers\Actions $actions */
             $actions->disableView();
             $actions->disableDelete();
         });
 
         $grid->tools(function ($tools) {
             // 禁用批量删除按钮
+            /** @var Grid\Tools $tools */
             $tools->batch(function ($batch) {
+                /** @var Grid\Tools\BatchActions $batch */
                 $batch->disableDelete();
             });
         });
 
         return $grid;
     }
-
 
     /**
      * Make a form builder.
@@ -102,25 +107,36 @@ class ProductsController extends Controller
      */
     protected function form()
     {
-        $form = new Form(new Product);
+        $form = new Form(new Product());
         // 一个输入框
         $form->text('title', '商品名称')->rules('required');
+
+        // 添加一个类目字段，与之前类目管理类似，使用 Ajax 的方式来搜索添加
+        $form->select('category_id', '类目')->options(
+            function ($id) {
+            $category = Category::find($id);
+            if ($category) {
+                return [$category->id => $category->full_name];
+            }
+        })->ajax('/admin/api/categories?is_directory=0');
+
         // 选择图片
         $form->image('image', '封面图片')->rules('required|image');
         // 富文本编辑器
         $form->editor('description', '商品描述')->rules('required');
-        $form->radio('on_sale', '上架')->options(['1' => '是' , '0' => '否'])->default(0);
+        $form->radio('on_sale', '上架')->options(['1' => '是', '0' => '否'])->default(0);
 
-        $form->hasMany('skus','SKU列表',function (Form\NestedForm $form){
-            $form->text('title','SKU 名称')->rules('required');
-            $form->text('description','SKU 描述')->rules('required');
-            $form->text('price','单价')->rules('required|numeric|min:0.01');
-            $form->text('stock','库存')->rules('required|integer|min:0');
+        $form->hasMany('skus', 'SKU列表', function (Form\NestedForm $form) {
+            $form->text('title', 'SKU 名称')->rules('required');
+            $form->text('description', 'SKU 描述')->rules('required');
+            $form->text('price', '单价')->rules('required|numeric|min:0.01');
+            $form->text('stock', '库存')->rules('required|integer|min:0');
         });
-        $form->saving(function (Form $form){
+        $form->saving(function (Form $form) {
             $form->model()->price =
                 collect($form->input('skus'))->where(Form::REMOVE_FLAG_NAME, 0)->min('price') ?: 0;
         });
+
         return $form;
     }
 }

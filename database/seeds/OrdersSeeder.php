@@ -68,7 +68,7 @@ class OrdersSeeder extends Seeder
                 ]);
 
             $product->update([
-                'rating' => $result->rating,
+                'rating' => (int)$result->rating,
                 'review_count' => $result->review_count,
                 'sold_count' => $result->sold_count,
             ]);
