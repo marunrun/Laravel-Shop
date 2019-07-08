@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidRequestException;
+use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,7 +23,7 @@ class ProductsController extends Controller
 
         // 模糊搜索 商品标题 描述  sku标题 sku描述
         if ($search = $request->get('search', '')) {
-            $like = '%' . $search . '%';
+            $like = '%'.$search.'%';
             $builder->where(function (Builder $query) use ($like) {
                 $query->where('title', 'like', $like)
                     ->orWhere('description', 'like', $like)
@@ -32,6 +33,21 @@ class ProductsController extends Controller
                     });
             });
         }
+
+        if ($request->input('category_id') && $category = Category::find($request->input('category_id'))){
+            // 如果这是一个父类目
+            if ($category->is_directory) {
+                // 则筛选出该类目下所有子类目的商品
+                $builder->whereHas('category',function (Builder $query) use ($category) {
+                    $query->where('path','like',$category->path.$category->id."-%");
+                });
+            } else {
+                // 如果这不是一个父类目
+                $builder->where('category_id',$category->id);
+            }
+        }
+
+
         // 是否有提交 order 参数 如果有 就赋值给$order
         if ($order = $request->get('order', '')) {
             if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)) {
@@ -45,9 +61,9 @@ class ProductsController extends Controller
 
         return view('products.index', [
             'products' => $products,
-            'filters'  => [
+            'filters' => [
                 'search' => $search,
-                'order'  => $order,
+                'order' => $order,
             ],
         ]);
     }
