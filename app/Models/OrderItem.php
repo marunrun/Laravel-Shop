@@ -7,13 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * App\Models\OrderItem
  *
- * @property-read \App\Models\Order $order
- * @property-read \App\Models\Product $product
- * @property-read \App\Models\ProductSku $productSku
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem query()
- * @mixin \Eloquent
  * @property int $id
  * @property int $order_id
  * @property int $product_id
@@ -23,6 +16,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $rating
  * @property string|null $review
  * @property \Illuminate\Support\Carbon|null $reviewed_at
+ * @property-read \App\Models\Order $order
+ * @property-read \App\Models\Product $product
+ * @property-read \App\Models\ProductSku $productSku
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem query()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem whereAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem whereOrderId($value)
@@ -32,6 +31,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem whereRating($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem whereReview($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\OrderItem whereReviewedAt($value)
+ * @mixin \Eloquent
  */
 class OrderItem extends Model
 {

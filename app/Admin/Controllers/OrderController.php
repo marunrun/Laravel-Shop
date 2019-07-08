@@ -176,7 +176,6 @@ class OrderController extends Controller
                 break;
             case 'alipay':
                 $refundNo = Order::getAvailableRefundNo();
-                \Log::debug($refundNo);
                 $res = app('alipay')->refund([
                     'out_trade_no'   => $order->no, // 之前的订单流水号
                     'refund_amount'  => $order->total_amount, // 退款金额，单位元

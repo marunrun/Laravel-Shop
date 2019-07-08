@@ -86,7 +86,6 @@ class Category extends Model
      */
     public function getPathIdsAttribute()
     {
-        \Log::debug($this->path);
         return array_filter(explode('-', trim($this->path, '-')));
     }
 

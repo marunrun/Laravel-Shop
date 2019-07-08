@@ -24,20 +24,20 @@ class AppServiceProvider extends ServiceProvider
         if ('local' === $this->app->environment()) {
             // 监听sql语句
             \DB::listen(function ($query) {
-                $tmp = str_replace('?', '"' . '%s' . '"', $query->sql);
+                $tmp       = str_replace('?', '"'.'%s'.'"', $query->sql);
                 $qBindings = [];
                 foreach ($query->bindings as $key => $value) {
                     if (is_numeric($key)) {
                         $qBindings[] = $value;
                     } else {
-                        $tmp = str_replace(':' . $key, '"' . $value . '"', $tmp);
+                        $tmp = str_replace(':'.$key, '"'.$value.'"', $tmp);
                     }
                 }
                 $tmp = vsprintf($tmp, $qBindings);
                 $tmp = str_replace('\\', '', $tmp);
                 file_put_contents(storage_path(
-                    'logs' . DIRECTORY_SEPARATOR . date('Y-m-d') . '_query.log'),
-                    ' execution time: ' . $query->time . 'ms; ' . $tmp . PHP_EOL,
+                    'logs'.DIRECTORY_SEPARATOR.date('Y-m-d').'_query.log'),
+                    ' execution time: '.$query->time.'ms; '.$tmp.PHP_EOL,
                     FILE_APPEND);
             });
         }
@@ -48,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+
         /*
          *  注册支付宝支付的服务容器
          *  使用app('alipay') 使用
@@ -65,11 +66,12 @@ class AppServiceProvider extends ServiceProvider
 
             // 判断当前项目运行环境是否为线上环境
             if ('production' !== app()->environment()) {
-                $config['mode'] = 'dev';
+                $config['mode']         = 'dev';
                 $config['log']['level'] = Logger::DEBUG;
             } else {
                 $config['log']['level'] = Logger::WARNING;
             }
+
             // 调用 Yansongda\Pay 来创建一个支付宝支付对象
             return Pay::alipay($config);
         });
@@ -85,18 +87,22 @@ class AppServiceProvider extends ServiceProvider
 
             // 判断当前项目运行环境是否为线上环境
             if ('production' !== app()->environment()) {
-                $config['mode'] = 'dev';
+                $config['mode']         = 'dev';
                 $config['log']['level'] = Logger::DEBUG;
             } else {
                 $config['log']['level'] = Logger::WARNING;
             }
+
             // 调用 Yansongda\Pay 来创建一个支付宝支付对象
             return Pay::wechat($config);
         });
 
+
         $this->app->singleton('Token', function () {
             return new TokenClass();
         });
+
+
 
         if ('local' == $this->app->environment()) {
             $this->app->register(\Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider::class);
