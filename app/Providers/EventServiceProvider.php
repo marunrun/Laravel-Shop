@@ -3,11 +3,12 @@
 namespace App\Providers;
 
 use App\Events\OrderPaid;
+use App\Events\OrderRefund;
 use App\Events\OrderReviewed;
 use App\Listeners\SendOrderPaidMail;
+use App\Listeners\SendOrderRefundMail;
 use App\Listeners\UpdateProductRating;
 use App\Listeners\UpdateProductSoldCount;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -29,7 +30,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderReviewed::class => [
             UpdateProductRating::class // 更新商品评价数量和评分
-        ]
+        ],
+        OrderRefund::class => [
+            SendOrderRefundMail::class, // 发送订单退款成功邮件
+        ],
     ];
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Admin\Controllers;
 
+use App\Events\OrderRefund;
 use App\Exceptions\InvalidRequestException;
 use App\Http\Requests\Admin\HandleRefundRequest;
 use Illuminate\Http\Request;
@@ -197,6 +198,8 @@ class OrderController extends Controller
                         'refund_no'     => $refundNo,
                         'refund_status' => Order::REFUND_STATUS_SUCCESS
                     ]);
+
+                    event(new OrderRefund($order));
                 }
                 break;
             default:
