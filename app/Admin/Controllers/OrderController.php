@@ -199,7 +199,7 @@ class OrderController extends Controller
                         'refund_status' => Order::REFUND_STATUS_SUCCESS
                     ]);
 
-                    event(new OrderRefund($order));
+//                    event(new OrderRefund($order));
                 }
                 break;
             default:
