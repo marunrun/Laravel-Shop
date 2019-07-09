@@ -68,14 +68,14 @@ return [
             'driver'  => 'qiniu',
             'domains' => [
                 'default'   => 'img.runrun520.cn', //你的七牛域名
-                'https'     => 'dn-yourdomain.qbox.me',         //你的HTTPS域名
-                'custom'    => 'shop.runrun520.cn',                //你的自定义域名
+                'https'     => '',         //你的HTTPS域名
+                'custom'    => 'img.runrun520.cn',                //你的自定义域名
             ],
             'access_key'=> 'pOVridDro6bnTQ4wbFIiFAVLJFtqXT8AmpKsAUr-',  //AccessKey
             'secret_key'=> '0wGYjFLF8DGJK4kO7BbxQ5m0yxyyldWYYcRMpkx4',  //SecretKey
             'bucket'    => 'marun',  //Bucket名字
             'notify_url'=> '',  //持久化处理回调地址
-            'url'       => 'http://of8kfibjo.bkt.clouddn.com/',  // 填写文件访问根url
+            'url'       => '',  // 填写文件访问根url
         ],
 
     ],

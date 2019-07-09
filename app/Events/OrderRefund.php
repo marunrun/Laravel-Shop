@@ -10,6 +10,7 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 class OrderRefund
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
+
     protected $order;
 
     /**
