@@ -17,6 +17,7 @@ class SendOrderRefundMail implements ShouldQueue
      */
     public function handle(OrderRefund $event)
     {
+        \Log::info('这里记录 订单退款!!!'.PHP_EOL);
         $order = $event->getOrder();
 
         $order->user->notify(new OrderRefundNotification($order));
