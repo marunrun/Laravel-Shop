@@ -31,9 +31,9 @@ class EventServiceProvider extends ServiceProvider
         OrderReviewed::class => [
             UpdateProductRating::class // 更新商品评价数量和评分
         ],
-//        OrderRefund::class => [
-//            SendOrderRefundMail::class, // 发送订单退款成功邮件
-//        ],
+        OrderRefund::class => [
+            SendOrderRefundMail::class, // 发送订单退款成功邮件
+        ],
     ];
 
     /**

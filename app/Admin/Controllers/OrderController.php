@@ -198,8 +198,8 @@ class OrderController extends Controller
                         'refund_no'     => $refundNo,
                         'refund_status' => Order::REFUND_STATUS_SUCCESS
                     ]);
-//                    event(new OrderRefund($order));
                     \Log::info('订单:'.$order->id.' 退款成功!');
+                    event(new OrderRefund($order));
                 }
                 break;
             default:
