@@ -21,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
             return (bool)$res;
         });
 
+        \View::composer(['products.index', 'products.show'], \App\Http\ViewComposers\CategoryTreeComposer::class);
+
         if ('local' === $this->app->environment()) {
             // 监听sql语句
             \DB::listen(function ($query) {

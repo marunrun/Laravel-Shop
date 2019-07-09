@@ -12,8 +12,32 @@
                         <div class="form-row">
                             <div class="col-md-9">
                                 <div class="form-row">
+                                    {{-- 面包屑开始 --}}
+                                    <div class="col-auto category-breadcrumb">
+                                        {{-- 全部的链接,直接跳转到全部的商品列表 --}}
+                                        <a href="{{ route('products.index') }}" class="all-products">全部</a> &gt;
+                                        {{-- 如果当前是通过类目筛选的 --}}
+                                        @if($category)
+                                            {{-- 遍历所有的祖先类目 --}}
+                                            @foreach($category->ancestors as $ancestor)
+                                                {{-- 添加名为祖先类目的链接 --}}
+                                                <span class="category">
+                                                    <a href="{{ route('products.index',['category_id' => $ancestor->id]) }}">
+                                                        {{ $ancestor->name }}
+                                                    </a>
+                                                </span>
+                                                <span>&gt;</span>
+                                            @endforeach
+                                            {{-- 最后展示当前类目名称 --}}
+                                            <span class="category">{{ $category->name }}</span>
+                                            <span>&gt;</span>
+                                            <input type="hidden" name="category_id" value="{{ $category->id }}">
+                                        @endif
+                                    </div>
+                                    {{-- 面包屑结束 --}}
                                     <div class="col-auto">
-                                        <input type="text" class="form-control form-control-sm"  name="search" placeholder="搜索">
+                                        <input type="text" class="form-control form-control-sm" name="search"
+                                               placeholder="搜索">
                                     </div>
                                     <div class="col-auto">
                                         <button class="btn btn-primary btn-sm">搜索</button>
@@ -34,16 +58,37 @@
                         </div>
                     </form>
                     {{--筛选组件完成--}}
+
+                    {{-- 展示子类目开始 --}}
+                    <div class="filters">
+                        {{-- 如果当前是通过类目筛选,并且此类目是一个父类目 --}}
+                        @if($category && $category->is_directory)
+                            <div class="row">
+                                <div class="col-3 filter-key">子类目:</div>
+                                <div class="col-9 filter-values">
+                                    {{-- 遍历直接子类目 --}}
+                                    @foreach($category->children as $child)
+                                        <a href="{{ route('products.index',['category_id' => $child->id]) }}">{{ $child->name }}</a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                    {{--展示子类目结束--}}
+
                     <div class="row products-list">
                         @foreach($products as $product)
                             <div class="col-3 product-item">
                                 <div class="product-content">
                                     <div class="top">
-                                        <div class="img" >
-                                            <a href="{{ route('products.show',['product' => $product->id]) }}"><img src="{{ $product->image_url }}" alt=""></a>
+                                        <div class="img">
+                                            <a href="{{ route('products.show',['product' => $product->id]) }}"><img
+                                                        src="{{ $product->image_url }}" alt=""></a>
                                         </div>
                                         <div class="price"><b>￥</b>{{ $product->price }}</div>
-                                        <div class="title"><a href="{{ route('products.show',['product' => $product->id]) }}">{{ $product->title }}</a></div>
+                                        <div class="title"><a
+                                                    href="{{ route('products.show',['product' => $product->id]) }}">{{ $product->title }}</a>
+                                        </div>
                                     </div>
                                     <div class="bottom">
                                         <div class="sold_count">销量 <span>{{ $product->sold_count }}笔</span></div>

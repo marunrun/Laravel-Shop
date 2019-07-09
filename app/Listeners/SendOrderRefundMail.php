@@ -9,6 +9,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 class SendOrderRefundMail implements ShouldQueue
 {
 
+    public $tries = 3;
+
+
     /**
      * Handle the event.
      *

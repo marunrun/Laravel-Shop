@@ -6,6 +6,7 @@ use App\Exceptions\InvalidRequestException;
 use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Services\CategoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -14,9 +15,10 @@ class ProductsController extends Controller
     /** 首页
      * @param Request $request
      *
+     * @param CategoryService $categoryService
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
-    public function index(Request $request)
+    public function index(Request $request, CategoryService $categoryService)
     {
         // 创建一个查询构建器
         $builder = Product::query()->where('on_sale', true);
@@ -34,16 +36,16 @@ class ProductsController extends Controller
             });
         }
 
-        if ($request->input('category_id') && $category = Category::find($request->input('category_id'))){
+        if ($request->input('category_id') && $category = Category::find($request->input('category_id'))) {
             // 如果这是一个父类目
             if ($category->is_directory) {
                 // 则筛选出该类目下所有子类目的商品
-                $builder->whereHas('category',function (Builder $query) use ($category) {
-                    $query->where('path','like',$category->path.$category->id."-%");
+                $builder->whereHas('category', function (Builder $query) use ($category) {
+                    $query->where('path', 'like', $category->path.$category->id."-%");
                 });
             } else {
                 // 如果这不是一个父类目
-                $builder->where('category_id',$category->id);
+                $builder->where('category_id', $category->id);
             }
         }
 
@@ -60,11 +62,13 @@ class ProductsController extends Controller
         $products = $builder->paginate(16);
 
         return view('products.index', [
-            'products' => $products,
-            'filters' => [
+            'products'     => $products,
+            'filters'      => [
                 'search' => $search,
-                'order' => $order,
+                'order'  => $order,
             ],
+            'category'     => $category ?? null,
+            'categoryTree' => $categoryService->getCategoryTree(),
         ]);
     }
 

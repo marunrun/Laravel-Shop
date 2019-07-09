@@ -8,6 +8,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendOrderPaidMail implements ShouldQueue
 {
+
+    public $tries = 3;
+
+
     public function handle(OrderPaid $event)
     {
         // 取出订单对象
