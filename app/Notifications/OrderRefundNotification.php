@@ -41,9 +41,6 @@ class OrderRefundNotification extends Notification implements ShouldQueue
      */
     public function toMail()
     {
-        \Log::info('这里记录 订单退款!!!'.PHP_EOL);
-
-
         return (new MailMessage)
             ->subject('订单退款成功') // 邮件标题
             ->greeting($this->order->user->name.'您好:') // 欢迎词
