@@ -29,5 +29,6 @@ Route::group([
     $router->delete('coupon_codes/{id}', 'CouponCodesController@destroy');
 
     $router->resource('categories','CategoriesController');
+    $router->resource('crowdfunding_products','CrowdfundingProductsController');
     $router->get('api/categories','CategoriesController@apiIndex');
 });

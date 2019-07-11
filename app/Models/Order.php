@@ -53,6 +53,8 @@ use Ramsey\Uuid\Uuid;
  * @property int|null $coupon_code_id
  * @property-read \App\Models\CouponCode|null $couponCode
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereCouponCodeId($value)
+ * @property string $type 订单类型
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereType($value)
  */
 class Order extends Model
 {
@@ -65,6 +67,14 @@ class Order extends Model
     const SHIP_STATUS_PENDING = 'pending';
     const SHIP_STATUS_DELIVERED = 'delivered';
     const SHIP_STATUS_RECEIVED = 'received';
+
+    const TYPE_NORMAL = 'normal';
+    const TYPE_CROWDFUNDING = 'crowdfunding';
+
+    public static $typeMap = [
+        self::TYPE_NORMAL => '普通订单',
+        self::TYPE_CROWDFUNDING => '众筹订单',
+    ];
 
     public static $refundStatusMap = [
         self::REFUND_STATUS_PENDING    => '未退款',
@@ -95,6 +105,7 @@ class Order extends Model
         'ship_status',
         'ship_data',
         'extra',
+        'type',
     ];
 
     protected $casts = [

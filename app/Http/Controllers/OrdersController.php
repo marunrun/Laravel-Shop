@@ -6,10 +6,12 @@ use App\Events\OrderReviewed;
 use App\Exceptions\CouponCodeUnavailableException;
 use App\Exceptions\InvalidRequestException;
 use App\Http\Requests\ApplyRefundRequest;
+use App\Http\Requests\CrowdFundingOrderRequest;
 use App\Http\Requests\OrderRequest;
 use App\Http\Requests\SendReviewRequest;
 use App\Models\CouponCode;
 use App\Models\Order;
+use App\Models\ProductSku;
 use App\Models\UserAddress;
 use App\Services\OrderService;
 use Carbon\Carbon;
@@ -24,14 +26,15 @@ class OrdersController extends Controller
      * @param OrderService $orderService
      *
      * @return mixed
+     *
      * @throws CouponCodeUnavailableException
      * @throws \Throwable
      */
     public function store(OrderRequest $request, OrderService $orderService)
     {
-        $user    = $request->user();
+        $user = $request->user();
         $address = UserAddress::find($request->input('address_id'));
-        $coupon  = null;
+        $coupon = null;
 
         if ($code = $request->input('coupon_code')) {
             $coupon = CouponCode::where('code', $code)->first();
@@ -40,7 +43,7 @@ class OrdersController extends Controller
             }
         }
 
-        /** @var CouponCode|null $coupon */
+        /* @var CouponCode|null $coupon */
         return $orderService->store($user, $address, $request->input('remark'), $request->input('items'), $coupon);
     }
 
@@ -128,7 +131,7 @@ class OrdersController extends Controller
     /**
      * 提交评价.
      *
-     * @param Order $order
+     * @param Order             $order
      * @param SendReviewRequest $request
      *
      * @return \Illuminate\Http\RedirectResponse
@@ -156,8 +159,8 @@ class OrdersController extends Controller
                 $orderItem = $order->items()->find($review['id']);
                 // 保存评分和评价
                 $orderItem->update([
-                    'rating'      => $review['rating'],
-                    'review'      => $review['review'],
+                    'rating' => $review['rating'],
+                    'review' => $review['review'],
                     'reviewed_at' => Carbon::now(),
                 ]);
             }
@@ -173,10 +176,13 @@ class OrdersController extends Controller
     }
 
     /**
-     * 申请退款
-     * @param Order $order
+     * 申请退款.
+     *
+     * @param Order              $order
      * @param ApplyRefundRequest $request
+     *
      * @return Order
+     *
      * @throws InvalidRequestException
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
@@ -189,7 +195,11 @@ class OrdersController extends Controller
             throw new InvalidRequestException('订单未支付，不可退款');
         }
 
-        if ($order->refund_status !== Order::REFUND_STATUS_PENDING) {
+        if ($order->type === Order::TYPE_CROWDFUNDING) {
+            throw new InvalidRequestException('众筹订单不支持退款');
+        }
+
+        if (Order::REFUND_STATUS_PENDING !== $order->refund_status) {
             throw new InvalidRequestException('该订单已经申请过退款，请勿重复申请');
         }
 
@@ -201,9 +211,26 @@ class OrdersController extends Controller
         // 将订单退款状态改成已申请退款
         $order->update([
             'refund_status' => Order::REFUND_STATUS_APPLIED,
-            'extra'         => $extra,
+            'extra' => $extra,
         ]);
 
         return $order;
+    }
+
+    /**
+     * 众筹商品下单
+     * @param CrowdFundingOrderRequest $request
+     * @param OrderService $service
+     * @return mixed
+     * @throws \Throwable
+     */
+    public function crowdfunding(CrowdFundingOrderRequest $request, OrderService $service)
+    {
+        $user = $request->user();
+        $sku = ProductSku::find($request->input('sku_id'));
+        $address = UserAddress::find($request->input('address_id'));
+        $amount = $request->input('amount');
+
+        return $service->crowdfunding($user, $address, $sku, $amount);
     }
 }

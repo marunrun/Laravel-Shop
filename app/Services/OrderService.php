@@ -22,12 +22,12 @@ use Carbon\Carbon;
 class OrderService
 {
     /**
-     * @param User $user
+     * @param User        $user
      * @param UserAddress $address
      * @param $remark
      * @param $items
-     *
      * @param CouponCode|null $coupon
+     *
      * @return mixed
      *
      * @throws CouponCodeUnavailableException
@@ -67,13 +67,11 @@ class OrderService
             foreach ($items as $data) {
                 $sku = ProductSku::find($data['sku_id']);
                 // 创建一个orderItem 与当前order关联
-
-                /**
-                 * @var OrderItem $item
-                 */
+                /** @var OrderItem $item */
                 $item = $order->items()->make([
                     'amount' => $data['amount'],
                     'price' => $sku->price,
+                    'type' => Order::TYPE_NORMAL,
                 ]);
                 $item->product()->associate($sku->product_id);
                 $item->productSku()->associate($sku);
@@ -87,7 +85,7 @@ class OrderService
 
             if ($coupon) {
                 // 检查当前订单金额是否符合优惠券使用规则
-                $coupon->checkAvailable($user,$totalAmount);
+                $coupon->checkAvailable($user, $totalAmount);
 
                 // 计算优惠后的价格
                 $totalAmount = $coupon->getAdjustedPrice($totalAmount);
@@ -113,6 +111,68 @@ class OrderService
 
         // 延迟任务 30 分钟后关闭未付款订单
         dispatch(new CloseOrder($order, config('shop.order_ttl', 1800)));
+
+        return $order;
+    }
+
+    /**
+     * 众筹商品,下单.
+     *
+     * @param User        $user
+     * @param UserAddress $address
+     * @param ProductSku  $sku
+     * @param $amount
+     *
+     * @return mixed
+     *
+     * @throws \Throwable
+     */
+    public function crowdfunding(User $user, UserAddress $address, ProductSku $sku, $amount)
+    {
+        $order = \DB::transaction(function () use ($user, $address, $sku, $amount) {
+            // 更新地址最后使用时间
+            $address->update(['last_used_at' => Carbon::now()]);
+
+            $order = new Order([
+                'address' => [
+                    'address' => $address->full_address,
+                    'zip' => $address->zip,
+                    'contact_name' => $address->contact_name,
+                    'contact_phone' => $address->contact_phone,
+                ],
+                'remark' => '',
+                'total_amount' => $sku->price * $amount,
+            ]);
+
+            // 将订单与用户相关联
+            $order->user()->associate($user);
+            // 写入数据库
+            $order->save();
+
+            /** @var OrderItem $item */
+            $item = $order->items()->make([
+                'amount' => $amount,
+                'price' => $sku->price,
+                'type' => Order::TYPE_CROWDFUNDING
+            ]);
+
+            $item->product()->associate($sku->product_id);
+            $item->productSku()->associate($sku);
+            $item->save();
+
+            // 扣减库存
+            if ($sku->decreaseStock($amount) <= 0) {
+                throw new InvalidRequestException('该商品库存不足');
+            }
+
+            return $order;
+        }, 3);
+
+        // 众筹结束时间 减去 当前时间 得到 剩余秒数
+        $crowdfundingTtl = $sku->product->crowdfunding->end_at->getTimestamp() - time();
+
+        // 剩余秒数 与 默认关闭时间取较小值作为订单关闭时间
+        dispatch(new CloseOrder($order, min(config('shop.order_ttl'), $crowdfundingTtl)));
 
         return $order;
     }

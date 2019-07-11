@@ -45,7 +45,7 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('order/{order}', 'OrdersController@show')->name('orders.show'); // 订单详情
     Route::post('orders/{order}/received', 'OrdersController@received')->name('orders.received'); // 订单确认收货
     Route::post('orders/{order}/apply_refund','OrdersController@applyRefund')->name('orders.apply_refund'); // 订单退款
-
+    Route::post('crowdfunding_orders','OrdersController@crowdfunding')->name('crowdfunding_orders.store');// 众筹商品下单
 
     // 支付相关
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');

@@ -5,6 +5,7 @@ namespace App\Admin\Controllers;
 use App\Events\OrderRefund;
 use App\Exceptions\InvalidRequestException;
 use App\Http\Requests\Admin\HandleRefundRequest;
+use App\Models\CrowdfundingProduct;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Http\Controllers\Controller;
@@ -34,7 +35,7 @@ class OrderController extends Controller
     /**
      * 展示订单详情.
      *
-     * @param mixed $order 订单的id
+     * @param mixed   $order   订单的id
      * @param Content $content
      *
      * @return Content
@@ -80,7 +81,7 @@ class OrderController extends Controller
     }
 
     /**
-     * @param Order $order
+     * @param Order   $order
      * @param Request $request
      *
      * @return \Illuminate\Http\RedirectResponse
@@ -100,18 +101,24 @@ class OrderController extends Controller
             throw new InvalidRequestException('该订单已发货');
         }
 
+        if (Order::TYPE_CROWDFUNDING === $order->type
+            &&
+            CrowdfundingProduct::STATUS_SUCCESS !== $order->items[0]->product->crowdfunding->status) {
+            throw new InvalidRequestException('众筹订单只能在众筹成功之后发货');
+        }
+
         // Laravel 5.5 之后 validate 返回校验过的值
         $data = $this->validate($request, [
             'express_company' => ['required'],
-            'express_no'      => ['required'],
+            'express_no' => ['required'],
         ], [], [
             'express_company' => '物流公司',
-            'express_no'      => '物流单号',
+            'express_no' => '物流单号',
         ]);
         // 更改发货状态为已发货
         $order->update([
             'ship_status' => Order::SHIP_STATUS_DELIVERED,
-            'ship_data'   => $data,
+            'ship_data' => $data,
         ]);
 
         // 返回上一页
@@ -121,15 +128,12 @@ class OrderController extends Controller
     /**
      * 是否同意退款.
      *
-     * @param Order $order
+     * @param Order               $order
      * @param HandleRefundRequest $request
      *
      * @return Order
      *
      * @throws InvalidRequestException
-     * @throws \Yansongda\Pay\Exceptions\GatewayException
-     * @throws \Yansongda\Pay\Exceptions\InvalidConfigException
-     * @throws \Yansongda\Pay\Exceptions\InvalidSignException
      */
     public function handleRefund(Order $order, HandleRefundRequest $request)
     {
@@ -153,7 +157,7 @@ class OrderController extends Controller
             // 将订单的状态改成未退款
             $order->update([
                 'refund_status' => Order::REFUND_STATUS_PENDING,
-                'extra'         => $extra,
+                'extra' => $extra,
             ]);
         }
 
@@ -161,12 +165,11 @@ class OrderController extends Controller
     }
 
     /**
-     * 同意退款
+     * 同意退款.
+     *
      * @param Order $order
+     *
      * @throws InvalidRequestException
-     * @throws \Yansongda\Pay\Exceptions\GatewayException
-     * @throws \Yansongda\Pay\Exceptions\InvalidConfigException
-     * @throws \Yansongda\Pay\Exceptions\InvalidSignException
      * @throws \Exception
      */
     protected function _refundOrder(Order $order)
@@ -178,8 +181,8 @@ class OrderController extends Controller
             case 'alipay':
                 $refundNo = Order::getAvailableRefundNo();
                 $res = app('alipay')->refund([
-                    'out_trade_no'   => $order->no, // 之前的订单流水号
-                    'refund_amount'  => $order->total_amount, // 退款金额，单位元
+                    'out_trade_no' => $order->no, // 之前的订单流水号
+                    'refund_amount' => $order->total_amount, // 退款金额，单位元
                     'out_request_no' => $refundNo, // 退款订单号
                 ]);
 
@@ -189,21 +192,21 @@ class OrderController extends Controller
                     $extra = $order->extra ?: [];
                     $extra['refund_failed_code'] = $res->sub_code;
                     $order->update([
-                        'refund_no'     => $refundNo,
+                        'refund_no' => $refundNo,
                         'refund_status' => Order::REFUND_STATUS_FAILED,
-                        'extra'         => $extra,
+                        'extra' => $extra,
                     ]);
                 } else {
                     $order->update([
-                        'refund_no'     => $refundNo,
-                        'refund_status' => Order::REFUND_STATUS_SUCCESS
+                        'refund_no' => $refundNo,
+                        'refund_status' => Order::REFUND_STATUS_SUCCESS,
                     ]);
                     \Log::info('订单:'.$order->id.' 退款成功!');
                     event(new OrderRefund($order));
                 }
                 break;
             default:
-                throw new InvalidRequestException('未知订单付款方式:' . $order->payment_method);
+                throw new InvalidRequestException('未知订单付款方式:'.$order->payment_method);
                 break;
         }
     }

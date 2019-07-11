@@ -20,6 +20,8 @@ class ProductsController extends Controller
      */
     public function index(Request $request, CategoryService $categoryService)
     {
+        $request->user();
+
         // 创建一个查询构建器
         $builder = Product::query()->where('on_sale', true);
 

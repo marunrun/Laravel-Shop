@@ -4,70 +4,28 @@ namespace App\Admin\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
-use App\Http\Controllers\Controller;
-use Encore\Admin\Controllers\HasResourceActions;
 use Encore\Admin\Form;
 use Encore\Admin\Grid;
-use Encore\Admin\Layout\Content;
 
-class ProductsController extends Controller
+class ProductsController extends CommonProductsController
 {
-    use HasResourceActions;
-
     /**
-     * Index interface.
+     * 抽象方法  返回当前商品的类型.
      *
-     * @param Content $content
-     *
-     * @return Content
+     * @return string
      */
-    public function index(Content $content)
+    public function getProductType()
     {
-        return $content
-            ->header('商品')
-            ->description('列表')
-            ->body($this->grid());
+        return Product::TYPE_NORMAL;
     }
 
     /**
-     * Edit interface.
-     *
-     * @param mixed $id
-     * @param Content $content
-     *
-     * @return Content
+     * 定义一个抽象方法，各个类型的控制器将实现本方法来定义列表应该展示哪些字段
+     * @return void
      */
-    public function edit($id, Content $content)
+    protected function customGrid(Grid $grid)
     {
-        return $content
-            ->header('编辑商品')
-            ->description(' ')
-            ->body($this->form()->edit($id));
-    }
-
-    /**
-     * Create interface.
-     *
-     * @param Content $content
-     *
-     * @return Content
-     */
-    public function create(Content $content)
-    {
-        return $content
-            ->header('添加商品')
-            ->description(' ')
-            ->body($this->form());
-    }
-
-    /**
-     * Make a grid builder.
-     *
-     * @return Grid
-     */
-    protected function grid()
-    {
-        $grid = new Grid(new Product());
+        $grid->model()->with('category');
 
         $grid->id('Id')->sortable();
         $grid->title('商品名称');
@@ -80,63 +38,15 @@ class ProductsController extends Controller
         $grid->rating('评分');
         $grid->sold_count('销量');
         $grid->review_count('评论数');
-
-        $grid->actions(function ($actions) {
-
-            /** @var Grid\Displayers\Actions $actions */
-            $actions->disableView();
-            $actions->disableDelete();
-        });
-
-        $grid->tools(function ($tools) {
-            // 禁用批量删除按钮
-            /** @var Grid\Tools $tools */
-            $tools->batch(function ($batch) {
-                /** @var Grid\Tools\BatchActions $batch */
-                $batch->disableDelete();
-            });
-        });
-
-        return $grid;
     }
 
     /**
-     * Make a form builder.
-     *
-     * @return Form
+     * 定义一个抽象方法，各个类型的控制器将实现本方法来定义表单应该有哪些额外的字段
+     * @param Form $form
+     * @return void
      */
-    protected function form()
+    protected function customForm(Form $form)
     {
-        $form = new Form(new Product());
-        // 一个输入框
-        $form->text('title', '商品名称')->rules('required');
-
-        // 添加一个类目字段，与之前类目管理类似，使用 Ajax 的方式来搜索添加
-        $form->select('category_id', '类目')->options(
-            function ($id) {
-            $category = Category::find($id);
-            if ($category) {
-                return [$category->id => $category->full_name];
-            }
-        })->ajax('/admin/api/categories?is_directory=0');
-
-        // 选择图片
-        $form->image('image', '封面图片')->rules('required|image');
-        // 富文本编辑器
-        $form->editor('description', '商品描述')->rules('required');
-        $form->radio('on_sale', '上架')->options(['1' => '是', '0' => '否'])->default(0);
-
-        $form->hasMany('skus', 'SKU列表', function (Form\NestedForm $form) {
-            $form->text('title', 'SKU 名称')->rules('required');
-            $form->text('description', 'SKU 描述')->rules('required');
-            $form->text('price', '单价')->rules('required|numeric|min:0.01');
-            $form->text('stock', '库存')->rules('required|integer|min:0');
-        });
-        $form->saving(function (Form $form) {
-            $form->model()->price =
-                collect($form->input('skus'))->where(Form::REMOVE_FLAG_NAME, 0)->min('price') ?: 0;
-        });
-
-        return $form;
+        // 普通商品没有额外的字段，因此这里不需要写任何代码
     }
 }

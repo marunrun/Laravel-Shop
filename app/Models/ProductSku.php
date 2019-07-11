@@ -43,6 +43,7 @@ class ProductSku extends Model
      * @param $amount
      * @return int
      * @throws InvalidRequestException
+     * @throws InternalException
      */
     public function decreaseStock($amount)
     {
@@ -57,6 +58,7 @@ class ProductSku extends Model
 
     /** 加库存
      * @param $amount
+     * @throws InternalException
      */
     public function addStock($amount)
     {

@@ -7,6 +7,7 @@ use App\Events\OrderRefund;
 use App\Events\OrderReviewed;
 use App\Listeners\SendOrderPaidMail;
 use App\Listeners\SendOrderRefundMail;
+use App\Listeners\UpdateCrowdfundingProductProgress;
 use App\Listeners\UpdateProductRating;
 use App\Listeners\UpdateProductSoldCount;
 use Illuminate\Auth\Events\Registered;
@@ -27,6 +28,7 @@ class EventServiceProvider extends ServiceProvider
         OrderPaid::class => [
             UpdateProductSoldCount::class, // 更新商品的销量
             SendOrderPaidMail::class, // 发送支付成功的邮件
+            UpdateCrowdfundingProductProgress::class, // 更新众筹进度
         ],
         OrderReviewed::class => [
             UpdateProductRating::class // 更新商品评价数量和评分
