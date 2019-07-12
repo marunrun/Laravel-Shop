@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('queue:work --delay=1 --tries=3')->everyFiveMinutes();
+        $schedule->command('queue:work redis --delay=1 --tries=3')->everyFiveMinutes();
 
         // $schedule->command('inspire')
         //          ->hourly();
