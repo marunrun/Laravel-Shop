@@ -18,6 +18,7 @@ class UpdateCrowdfundingProductProgress implements ShouldQueue
      */
     public function handle(OrderPaid $event)
     {
+
         $order = $event->getOrder();
 
         // 如果订单类型不是众筹商品订单，无需处理
@@ -38,7 +39,6 @@ class UpdateCrowdfundingProductProgress implements ShouldQueue
                 \DB::raw('count(distinct(user_id)) as user_count')
             ]);
 
-        \Log::info('众筹金额 and  人数:'.json_encode($data,JSON_PRETTY_PRINT));
         $crowdfunding->update([
             'total_amount' => $data->total_amount,
             'user_count'   => $data->user_count,

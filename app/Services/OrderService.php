@@ -142,6 +142,7 @@ class OrderService
                 ],
                 'remark' => '',
                 'total_amount' => $sku->price * $amount,
+                'type' => Order::TYPE_CROWDFUNDING
             ]);
 
             // 将订单与用户相关联
@@ -153,7 +154,6 @@ class OrderService
             $item = $order->items()->make([
                 'amount' => $amount,
                 'price' => $sku->price,
-                'type' => Order::TYPE_CROWDFUNDING
             ]);
 
             $item->product()->associate($sku->product_id);
