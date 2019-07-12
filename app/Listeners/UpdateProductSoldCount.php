@@ -21,6 +21,7 @@ class UpdateProductSoldCount implements ShouldQueue
         $order = $event->getOrder();
         // 预加载商品数据
         $order->load('items.product');
+        \Log::info(__FILE__.__LINE__.'商品:'.$order->id);
         // 循环遍历订单商品
         foreach ($order->items as $item) {
             $product = $item->product;

@@ -4,19 +4,11 @@ namespace App\Listeners;
 
 use App\Events\OrderPaid;
 use App\Models\Order;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Query\Builder;
 
-class UpdateCrowdfundingProductProgress
+class UpdateCrowdfundingProductProgress implements ShouldQueue
 {
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        //
-    }
 
     /**
      * Handle the event.
@@ -46,6 +38,7 @@ class UpdateCrowdfundingProductProgress
                 \DB::raw('count(distinct(user_id)) as user_count')
             ]);
 
+        \Log::info('众筹金额 and  人数:'.json_encode($data,JSON_PRETTY_PRINT));
         $crowdfunding->update([
             'total_amount' => $data->total_amount,
             'user_count'   => $data->user_count,
