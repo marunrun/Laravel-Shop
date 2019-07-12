@@ -53,6 +53,7 @@ class OrderService
                 ],
                 'remark' => $remark,
                 'total_amount' => 0,
+                'type' => Order::TYPE_NORMAL,
             ]);
 
             // 订单关联到用户
@@ -71,7 +72,6 @@ class OrderService
                 $item = $order->items()->make([
                     'amount' => $data['amount'],
                     'price' => $sku->price,
-                    'type' => Order::TYPE_NORMAL,
                 ]);
                 $item->product()->associate($sku->product_id);
                 $item->productSku()->associate($sku);
@@ -144,6 +144,8 @@ class OrderService
                 'total_amount' => $sku->price * $amount,
                 'type' => Order::TYPE_CROWDFUNDING
             ]);
+
+
 
             // 将订单与用户相关联
             $order->user()->associate($user);

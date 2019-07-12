@@ -6,6 +6,7 @@ use App\Events\OrderPaid;
 use App\Models\Order;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Query\Builder;
+use Log;
 
 class UpdateCrowdfundingProductProgress implements ShouldQueue
 {
@@ -20,11 +21,12 @@ class UpdateCrowdfundingProductProgress implements ShouldQueue
     {
 
         $order = $event->getOrder();
-
+        Log::info('更新众筹进度:'.$order->id);
         // 如果订单类型不是众筹商品订单，无需处理
         if ($order->type !== Order::TYPE_CROWDFUNDING) {
             return;
         }
+
 
         $crowdfunding = $order->items[0]->product->crowdfunding;
 
@@ -38,6 +40,8 @@ class UpdateCrowdfundingProductProgress implements ShouldQueue
                 \DB::raw('sum(total_amount) as total_amount'),
                 \DB::raw('count(distinct(user_id)) as user_count')
             ]);
+
+        Log::info('当前众筹进度:'.json_encode($data,JSON_PRETTY_PRINT));
 
         $crowdfunding->update([
             'total_amount' => $data->total_amount,
