@@ -5,7 +5,7 @@ namespace App\Listeners;
 use App\Events\OrderPaid;
 use App\Models\Order;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Log;
 
 class UpdateCrowdfundingProductProgress implements ShouldQueue
