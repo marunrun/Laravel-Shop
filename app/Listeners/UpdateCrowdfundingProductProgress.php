@@ -24,7 +24,6 @@ class UpdateCrowdfundingProductProgress implements ShouldQueue
             return;
         }
 
-
         $crowdfunding = $order->items[0]->product->crowdfunding;
 
         $data = Order::query()
