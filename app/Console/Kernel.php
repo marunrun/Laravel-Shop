@@ -19,12 +19,13 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
+     * @param  \Illuminate\Console\Scheduling\Schedule $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('queue:work redis --delay=1 --tries=3')->everyFiveMinutes();
+        $schedule->command('cron:finish-crowdfunding')->everyMinute();
 
         // $schedule->command('inspire')
         //          ->hourly();

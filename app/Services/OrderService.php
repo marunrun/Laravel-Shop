@@ -22,7 +22,7 @@ use Carbon\Carbon;
 class OrderService
 {
     /**
-     * @param User        $user
+     * @param User $user
      * @param UserAddress $address
      * @param $remark
      * @param $items
@@ -45,15 +45,15 @@ class OrderService
 
             // 创建订单
             $order = new Order([
-                'address' => [
-                    'address' => $address->full_address,
-                    'zip' => $address->zip,
-                    'contact_name' => $address->contact_name,
+                'address'      => [
+                    'address'       => $address->full_address,
+                    'zip'           => $address->zip,
+                    'contact_name'  => $address->contact_name,
                     'contact_phone' => $address->contact_phone,
                 ],
-                'remark' => $remark,
+                'remark'       => $remark,
                 'total_amount' => 0,
-                'type' => Order::TYPE_NORMAL,
+                'type'         => Order::TYPE_NORMAL,
             ]);
 
             // 订单关联到用户
@@ -71,7 +71,7 @@ class OrderService
                 /** @var OrderItem $item */
                 $item = $order->items()->make([
                     'amount' => $data['amount'],
-                    'price' => $sku->price,
+                    'price'  => $sku->price,
                 ]);
                 $item->product()->associate($sku->product_id);
                 $item->productSku()->associate($sku);
@@ -118,9 +118,9 @@ class OrderService
     /**
      * 众筹商品,下单.
      *
-     * @param User        $user
+     * @param User $user
      * @param UserAddress $address
-     * @param ProductSku  $sku
+     * @param ProductSku $sku
      * @param $amount
      *
      * @return mixed
@@ -134,18 +134,16 @@ class OrderService
             $address->update(['last_used_at' => Carbon::now()]);
 
             $order = new Order([
-                'address' => [
-                    'address' => $address->full_address,
-                    'zip' => $address->zip,
-                    'contact_name' => $address->contact_name,
+                'address'      => [
+                    'address'       => $address->full_address,
+                    'zip'           => $address->zip,
+                    'contact_name'  => $address->contact_name,
                     'contact_phone' => $address->contact_phone,
                 ],
-                'remark' => '',
+                'remark'       => '',
                 'total_amount' => $sku->price * $amount,
-                'type' => Order::TYPE_CROWDFUNDING
+                'type'         => Order::TYPE_CROWDFUNDING,
             ]);
-
-
 
             // 将订单与用户相关联
             $order->user()->associate($user);
@@ -155,7 +153,7 @@ class OrderService
             /** @var OrderItem $item */
             $item = $order->items()->make([
                 'amount' => $amount,
-                'price' => $sku->price,
+                'price'  => $sku->price,
             ]);
 
             $item->product()->associate($sku->product_id);
@@ -177,5 +175,60 @@ class OrderService
         dispatch(new CloseOrder($order, min(config('shop.order_ttl'), $crowdfundingTtl)));
 
         return $order;
+    }
+
+    /**
+     * @param Order $order
+     * @throws InvalidRequestException
+     * @throws \Exception
+     */
+    public function refundOrder(Order $order)
+    {
+        switch ($order->payment_method) {
+            case 'wechat':
+                // 生成退款订单号
+                $refundNo = Order::getAvailableRefundNo();
+                app('wechat_pay')->refund([
+                    'out_trade_no'  => $order->no,
+                    'total_fee'     => $order->total_amount * 100,
+                    'refund_fee'    => $order->total_amount * 100,
+                    'out_refund_no' => $refundNo,
+//                    'notify_url' => ngrok_url('payment.wechat.refund_notify'),
+                ]);
+                $order->update([
+                    'refund_no'     => $refundNo,
+                    'refund_status' => Order::REFUND_STATUS_PROCESSING,
+                ]);
+                break;
+            case 'alipay':
+                $refundNo = Order::getAvailableRefundNo();
+                $res      = app('alipay')->refund([
+                    'out_trade_no'   => $order->no, // 之前的订单流水号
+                    'refund_amount'  => $order->total_amount, // 退款金额，单位元
+                    'out_request_no' => $refundNo, // 退款订单号
+                ]);
+
+                // 如果返回值里有sub_code 字段 说明退款失败
+                if ($res->sub_code) {
+                    // 将退款失败字段保存到extra中
+                    $extra                       = $order->extra ?: [];
+                    $extra['refund_failed_code'] = $res->sub_code;
+                    $order->update([
+                        'refund_no'     => $refundNo,
+                        'refund_status' => Order::REFUND_STATUS_FAILED,
+                        'extra'         => $extra,
+                    ]);
+                } else {
+                    $order->update([
+                        'refund_no'     => $refundNo,
+                        'refund_status' => Order::REFUND_STATUS_SUCCESS,
+                    ]);
+                    event(new OrderRefund($order));
+                }
+                break;
+            default:
+                throw new InvalidRequestException('未知订单付款方式:'.$order->payment_method);
+                break;
+        }
     }
 }

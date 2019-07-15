@@ -72,7 +72,7 @@ class Order extends Model
     const TYPE_CROWDFUNDING = 'crowdfunding';
 
     public static $typeMap = [
-        self::TYPE_NORMAL => '普通订单',
+        self::TYPE_NORMAL       => '普通订单',
         self::TYPE_CROWDFUNDING => '众筹订单',
     ];
 
@@ -175,14 +175,14 @@ class Order extends Model
 
         for ($i = 0; $i < 10; ++$i) {
             // 随机生成一个6位数字
-            $no = $prefix . str_pad(random_int(0, 999999), 6, 0, STR_PAD_LEFT);
+            $no = $prefix.str_pad(random_int(0, 999999), 6, 0, STR_PAD_LEFT);
             // 判断当前订单号是否存在
             if (!static::query()->where('no', $no)->exists()) {
                 return $no;
             }
         }
 
-        \Log::warning('find order no failed');
+        \Log::warning('生成随机订单号失败');
 
         return false;
     }

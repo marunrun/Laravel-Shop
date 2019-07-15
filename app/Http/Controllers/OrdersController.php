@@ -153,7 +153,6 @@ class OrdersController extends Controller
             throw new InvalidRequestException('此订单已评价，不可重复提交');
         }
         $reviews = $request->input('reviews');
-        \Log::info(111);
         \DB::transaction(function () use ($reviews, $order) {
             foreach ($reviews as $review) {
                 $orderItem = $order->items()->find($review['id']);
