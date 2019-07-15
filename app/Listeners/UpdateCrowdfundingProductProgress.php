@@ -26,6 +26,7 @@ class UpdateCrowdfundingProductProgress implements ShouldQueue
 
         $crowdfunding = $order->items[0]->product->crowdfunding;
 
+
         $data = Order::query()
             ->where('type', Order::TYPE_CROWDFUNDING)
             ->whereNotNull('paid_at')
