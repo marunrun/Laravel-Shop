@@ -48,6 +48,8 @@
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a href="{{ route('user_addresses.index') }}" class="dropdown-item">收获地址</a>
                             <a href="{{ route('orders.index') }}" class="dropdown-item">我的订单</a>
+                            <!-- 放在『我的订单』下方 -->
+                            <a href="{{ route('installments.index') }}" class="dropdown-item">分期付款</a>
                             <a href="{{ route('products.favorites') }}" class="dropdown-item">我的收藏</a>
                             <a href="#" class="dropdown-item" id="logout"
                                onclick="event.preventDefault();document.getElementById('logout-form').submit();">退出登陆</a>

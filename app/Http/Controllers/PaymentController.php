@@ -4,11 +4,91 @@ namespace App\Http\Controllers;
 
 use App\Events\OrderPaid;
 use App\Exceptions\InvalidRequestException;
+use App\Models\Installment;
+use App\Models\InstallmentItem;
 use App\Models\Order;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PaymentController extends Controller
 {
+
+    /**
+     * @param Order $order
+     * @param Request $request
+     * @return Installment
+     * @throws InvalidRequestException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws \Illuminate\Validation\ValidationException
+     * @throws \Exception
+     */
+    public function payByInstallment(Order $order, Request $request)
+    {
+        // 判断当前订单是否属于当前用户
+        $this->authorize('own', $order);
+
+        // 订单已支付或已关闭
+        if ($order->paid_at || $order->closed) {
+            throw new InvalidRequestException('订单状态不正确');
+        }
+
+        if ($order->total_amount < config('shop.min_installment_amount')) {
+            throw new InvalidRequestException('订单不满足分期的最低金额要求');
+        }
+        // 还款月份必须是我们配置好的费率的期数
+        $this->validate($request, [
+            'count' => ['required', Rule::in(array_keys(config('shop.installment_fee_rate')))],
+        ]);
+
+        // 删除同一笔订单发起过其他状态是未付款的分期付款,避免同一笔商品订单有多个分期付款
+        Installment::query()
+            ->where('order_id', $order->id)
+            ->where('status', InstallmentItem::REFUND_STATUS_PENDING)
+            ->delete();
+        $count       = $request->input('count');
+        $installment = new Installment([
+            // 订单总金额
+            'total_amount' => $order->total_amount,
+            // 分期期数
+            'count'        => $count,
+            // 从配置文件中读取的对应期数的费率
+            'fee_rate'     => config('shop.installment_fee_rate')[$count],
+            // 从配置文件中读取当前逾期费率
+            'fine_rate'    => config('shop.installment_fine_rate'),
+        ]);
+
+        $installment->user()->associate($request->user());
+        $installment->order()->associate($order);
+        $installment->save();
+
+        // 第一期的还款截止日期为明天凌晨 0 点
+        $dueDate = Carbon::tomorrow();
+        // 计算每一期的本金
+        $base = big_number($order->total_amount)->divide($count)->getValue();
+        // 计算每一期的手续费
+        $fee = big_number($base)->multiply($installment->fee_rate)->divide(100)->getValue();
+        // 根据用户选择的还款期数,创建对应的还款计划
+        for ($i = 0; $i < $count; $i++) {
+            // 最后一期的本金要用总金减去前面几期的本金
+            if ($count - 1 == $i) {
+                $base = big_number($order->total_amount)->subtract(big_number($base)->multiply($count - 1));
+            }
+
+            $installment->items()->create([
+                'sequence' => $i,
+                'base'     => $base,
+                'fee'      => $fee,
+                'due_date' => $dueDate,
+            ]);
+
+            // 还款截至日期 加上 30 天
+            $dueDate = $dueDate->copy()->addMonth();
+        }
+
+        return $installment;
+    }
+
     /**
      *  使用支付宝网页支付
      * @param Order $order
@@ -35,7 +115,8 @@ class PaymentController extends Controller
     }
 
     /**
-     *  支付宝网页同步回调
+     * 支付宝网页同步回调,跳转网页
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function alipayReturn()
     {
@@ -50,9 +131,7 @@ class PaymentController extends Controller
 
     /**
      * 支付宝服务器端的异步回调
-     * @return string|\Symfony\Component\HttpFoundation\Response
-     * @throws \Yansongda\Pay\Exceptions\InvalidConfigException
-     * @throws \Yansongda\Pay\Exceptions\InvalidSignException
+     * @return string
      */
     public function alipayNotify()
     {
@@ -97,7 +176,7 @@ class PaymentController extends Controller
 
 
     /**
-     *  微信扫码支付
+     * 微信扫码支付
      * @param Order $order
      * @return mixed
      * @throws InvalidRequestException
@@ -121,9 +200,8 @@ class PaymentController extends Controller
 
 
     /**
-     * @return string|\Symfony\Component\HttpFoundation\Response
-     * @throws \Yansongda\Pay\Exceptions\InvalidArgumentException
-     * @throws \Yansongda\Pay\Exceptions\InvalidSignException
+     * 微信支付异步回调
+     * @return string
      */
     public function wechatNotify()
     {

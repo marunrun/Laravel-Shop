@@ -51,9 +51,13 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     Route::get('payment/{order}/alipay', 'PaymentController@payByAlipay')->name('payment.alipay');
     Route::get('payment/alipay/return', 'PaymentController@alipayReturn')->name('payment.alipay.return');
     Route::get('payment/{order}/wechat', 'PaymentController@payByWechat')->name('payment.wechat');
-
+    Route::post('payment/{order}/installment','PaymentController@payByInstallment')->name('payment.installment');
     // 优惠券
     Route::get('coupon_codes/{code}', 'CouponCodeController@show')->name('coupon_codes.show');
+
+    // 分期付款
+    Route::get('installments','InstallmentsController@index')->name('installments.index');
+    Route::get('installments/{installment}', 'InstallmentsController@show')->name('installments.show');
 });
 
 // 无需登陆 认证
