@@ -58,6 +58,8 @@ Route::group(['middleware' => ['auth', 'verified']], function () {
     // 分期付款
     Route::get('installments','InstallmentsController@index')->name('installments.index');
     Route::get('installments/{installment}', 'InstallmentsController@show')->name('installments.show');
+    Route::get('installments/{installment}/alipay','InstallmentsController@payByAlipay')->name('installments.alipay');
+    Route::get('installments/alipay/return','InstallmentsController@alipayReturn')->name('installments.alipay.return');
 });
 
 // 无需登陆 认证
@@ -71,3 +73,6 @@ Route::get('/products/{product}', 'ProductsController@show')->name('products.sho
 Route::post('payment/alipay/notify', 'PaymentController@alipayNotify')->name('payment.alipay.notify');
 // 微信支付异步回调
 Route::get('payment/wechat/notify', 'PaymentController@wechatNotify')->name('payment.wechat.notify');
+
+// 分期付款支付宝异步回调
+Route::post('installments/alipay/notify','InstallmentsController@alipayNotify')->name('installments.alipay.notify');
