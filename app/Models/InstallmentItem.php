@@ -89,7 +89,7 @@ class InstallmentItem extends Model
             $total->add($this->fine);
         }
 
-        return $total;
+        return $total->getValue();
     }
 
     /**
