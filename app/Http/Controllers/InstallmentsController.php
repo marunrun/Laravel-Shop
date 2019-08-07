@@ -80,6 +80,7 @@ class InstallmentsController extends Controller
     // 支付宝前端回调
     public function alipayReturn()
     {
+        \Log::debug('分期付款,同步跳转');
         try {
             app('alipay')->verify();
         } catch (\Exception $e) {
