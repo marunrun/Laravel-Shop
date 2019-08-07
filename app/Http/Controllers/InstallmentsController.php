@@ -105,7 +105,7 @@ class InstallmentsController extends Controller
         // 拉起支付时使用的支付订单号是由分期流水号 + 还款计划编号组成的
         // 因此可以通过支付订单号来还原出这笔还款是哪个分期付款的哪个还款计划
         list($no,$sequence) = explode('_',$data->out_trade_no);
-
+        \Log::info('分期付款 异步回调.',['no' => $no,'sequence' => $sequence]);
         // 根据分期流水号查询对应的分期记录，原则上不会找不到，这里的判断只是增强代码健壮性
         /** @var Installment $installment */
         if (!$installment = Installment::where('no', $no)->first()) {
