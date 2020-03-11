@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Facade\TokenClass;
 use Carbon\Carbon;
+use Elasticsearch\ClientBuilder as ESClientBuilder;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Monolog\Logger;
@@ -21,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
 
             $res = preg_match($regex, $value);
 
-            return (bool)$res;
+            return (bool) $res;
         });
 
         \View::composer(['products.index', 'products.show'], \App\Http\ViewComposers\CategoryTreeComposer::class);
@@ -29,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
         if ('local' === $this->app->environment()) {
             // 监听sql语句
             \DB::listen(function ($query) {
-                $tmp       = str_replace('?', '"'.'%s'.'"', $query->sql);
+                $tmp = str_replace('?', '"'.'%s'.'"', $query->sql);
                 $qBindings = [];
                 foreach ($query->bindings as $key => $value) {
                     if (is_numeric($key)) {
@@ -71,8 +72,8 @@ class AppServiceProvider extends ServiceProvider
 
             // 判断当前项目运行环境是否为线上环境
 //            if ('production' !== app()->environment()) {
-                $config['mode']         = 'dev';
-                $config['log']['level'] = Logger::DEBUG;
+            $config['mode'] = 'dev';
+            $config['log']['level'] = Logger::DEBUG;
 //            } else {
 //                $config['log']['level'] = Logger::WARNING;
 //            }
@@ -92,8 +93,8 @@ class AppServiceProvider extends ServiceProvider
 
             // 判断当前项目运行环境是否为线上环境
 //            if ('production' !== app()->environment()) {
-                $config['mode']         = 'dev';
-                $config['log']['level'] = Logger::DEBUG;
+            $config['mode'] = 'dev';
+            $config['log']['level'] = Logger::DEBUG;
 //            } else {
 //                $config['log']['level'] = Logger::WARNING;
 //            }
@@ -102,11 +103,19 @@ class AppServiceProvider extends ServiceProvider
             return Pay::wechat($config);
         });
 
+        $this->app->singleton("es", function () {
+            // 从配置文件读取 ES的服务器列表
+            $builder = ESClientBuilder::create()->setHosts(config('database.elasticSearch.hosts'));
+            if (app()->environment() == 'local') {
+                // 本地配置日志
+                $builder->setLogger(app('log')->driver());
+            }
+            return $builder->build();
+        });
 
         $this->app->singleton('Token', function () {
             return new TokenClass();
         });
-
 
 
         if ('local' == $this->app->environment()) {

@@ -129,7 +129,7 @@ return [
     'upload' => [
          // 对应filesystem.php中的disks
         // Disk in `config/filesystem.php`.
-        'disk' => 'qiniu',
+        'disk' => 'public',
 
         // Image and file upload path under the disk above.
         'directory' => [

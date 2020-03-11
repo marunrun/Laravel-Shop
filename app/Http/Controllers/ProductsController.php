@@ -7,19 +7,108 @@ use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Services\CategoryService;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\View\View;
 
 class ProductsController extends Controller
 {
     /** 首页
-     * @param Request $request
+     * @param  Request  $request
      *
-     * @param CategoryService $categoryService
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @param  CategoryService  $categoryService
+     * @return Factory|View
      */
     public function index(Request $request, CategoryService $categoryService)
     {
+        $page = $request->input('page', 1);
+        $perPage = 16;
+        $params = [
+            'index' => 'products',
+            'body' => [
+                'from' => ($page - 1) * $perPage,
+                'size' => $perPage,
+                'query' => [
+                    'bool' => [
+                        'filter' => [
+                            ['term' => ['on_sale' => true]],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        // 是否有提交 order 参数，如果有就赋值给 $order 变量
+        // order 参数用来控制商品的排序规则
+        if ($order = $request->input('order', '')) {
+            // 是否是以 _asc 或者 _desc 结尾
+            if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)) {
+                // 如果字符串的开头是这 3 个字符串之一，说明是一个合法的排序值
+                if (in_array($m[1], ['price', 'sold_count', 'rating'])) {
+                    // 根据传入的排序值来构造排序参数
+                    $params['body']['sort'] = [[$m[1] => $m[2]]];
+                }
+            }
+        }
+
+        if ($request->input('category_id') && $category = Category::find($request->input('category_id'))) {
+            if ($category->is_directory) {
+                // 如果是父类目 使用category_path筛选
+                $params['body']['query']['bool']['filter'][] = [
+                    'prefix' => ['category_path' => $category->path.$category->id.'-'],
+                ];
+            } else {
+                // 否则通过 category_id来筛选
+                $params['body']['query']['bool']['filter'][] = [
+                    'term' => ['category_id' => $category->id],
+                ];
+            }
+        }
+
+        if ($search = $request->input('search', '')) {
+            // 将搜索词根据空格拆分成数组，并过滤掉空项
+            $keywords = array_filter(explode(' ', $search));
+            $params['body']['query']['bool']['must'] = [];
+            foreach ($keywords as $keyword) {
+                $params['body']['query']['bool']['must'][] = [
+                    [
+                        'multi_match' => [
+                            'query' => $keyword,
+                            'fields' => [
+                                'title^2',
+                                'long_title^2',
+                                'category^2',
+                                'description',
+                                'skus_title',
+                                'skus_description',
+                                'properties_value',
+                            ],
+                        ],
+                    ],
+                ];
+            }
+
+        }
+
+        $res = app('es')->search($params);
+        $productsIds = collect($res['hits']['hits'])->pluck('_id')->all();
+        $products = Product::query()->orderByRaw(sprintf("FIND_IN_SET(id,'%s')",
+            join(',', $productsIds)))->findMany($productsIds);
+        $paper = new LengthAwarePaginator($products, $res['hits']['total']['value'], $perPage, $page, [
+            'path' => route('products.index', false),
+        ]);
+
+        return view('products.index', [
+            'products' => $paper,
+            'filters' => [
+                'search' => $search,
+                'order' => $order,
+            ],
+            'category' => $category ?? null,
+//            'categoryTree' => $categoryService->getCategoryTree(),
+        ]);
+
 
         // 创建一个查询构建器
         $builder = Product::query()->where('on_sale', true);
@@ -63,21 +152,21 @@ class ProductsController extends Controller
         $products = $builder->paginate(16);
 
         return view('products.index', [
-            'products'     => $products,
-            'filters'      => [
+            'products' => $products,
+            'filters' => [
                 'search' => $search,
-                'order'  => $order,
+                'order' => $order,
             ],
-            'category'     => $category ?? null,
+            'category' => $category ?? null,
             'categoryTree' => $categoryService->getCategoryTree(),
         ]);
     }
 
     /** 商品详情页面
-     * @param Product $product
-     * @param Request $request
+     * @param  Product  $product
+     * @param  Request  $request
      *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Factory|View
      *
      * @throws InvalidRequestException
      */
@@ -104,8 +193,8 @@ class ProductsController extends Controller
     }
 
     /** 收藏商品
-     * @param Product $product
-     * @param Request $request
+     * @param  Product  $product
+     * @param  Request  $request
      *
      * @return array
      */
@@ -122,8 +211,8 @@ class ProductsController extends Controller
     }
 
     /**取消收藏
-     * @param Product $product
-     * @param Request $request
+     * @param  Product  $product
+     * @param  Request  $request
      * @return array
      */
     public function disfavor(Product $product, Request $request)
@@ -138,9 +227,9 @@ class ProductsController extends Controller
     /**
      *  我的收藏列表.
      *
-     * @param Request $request
+     * @param  Request  $request
      *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Factory|View
      */
     public function favorites(Request $request)
     {

@@ -9,22 +9,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
- * App\Models\CouponCode.
+ * App\Models\CouponCode
  *
  * @property int $id
- * @property string $name        优惠券标题
- * @property string $code        优惠码，唯一
- * @property string $type        优惠卷类型
- * @property float $value       折扣值
- * @property int $total       全站可兑换数量
- * @property int $used        已兑换数量
- * @property float $min_amount  使用该优惠券的最低金额
- * @property \Illuminate\Support\Carbon|null $not_before  在这之前不可用
- * @property \Illuminate\Support\Carbon|null $not_after   在这之后不可用
- * @property bool $enabled     优惠券是否生效
+ * @property string $name 优惠券标题
+ * @property string $code 优惠码，唯一
+ * @property string $type 优惠卷类型
+ * @property float $value 折扣值
+ * @property int $total 全站可兑换数量
+ * @property int $used 已兑换数量
+ * @property float $min_amount 使用该优惠券的最低金额
+ * @property \Illuminate\Support\Carbon|null $not_before 在这之前不可用
+ * @property \Illuminate\Support\Carbon|null $not_after 在这之后不可用
+ * @property bool $enabled 优惠券是否生效
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property mixed $description
+ * @property-read mixed $description
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CouponCode newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CouponCode newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CouponCode query()

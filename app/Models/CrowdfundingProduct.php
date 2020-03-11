@@ -7,12 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * App\Models\CrowdfundingProduct
  *
- * @property-read float $percent
- * @property-read \App\Models\Product $product
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct query()
- * @mixin \Eloquent
  * @property int $id
  * @property int $product_id 商品id
  * @property float $target_amount 众筹目标金额
@@ -20,6 +14,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $user_count 当前参与众筹用户数
  * @property \Illuminate\Support\Carbon $end_at 结束时间
  * @property string $status
+ * @property-read float $percent
+ * @property-read \App\Models\Product $product
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct query()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct whereEndAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct whereProductId($value)
@@ -27,6 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct whereTargetAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct whereTotalAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\CrowdfundingProduct whereUserCount($value)
+ * @mixin \Eloquent
  */
 class CrowdfundingProduct extends Model
 {

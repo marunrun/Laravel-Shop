@@ -6,16 +6,22 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * App\Models\Category.
+ * App\Models\Category
  *
  * @property int $id
- * @property string $name         名称
- * @property int|null $parent_id    上级id
+ * @property string $name 名称
+ * @property int|null $parent_id 上级id
  * @property bool $is_directory 是否拥有子类目
- * @property int $level        当前层级
- * @property string $path         该类目的所有父级
+ * @property int $level 当前层级
+ * @property string $path 该类目的所有父级
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $children
+ * @property-read \Illuminate\Support\Collection $ancestors
+ * @property-read string $full_name
+ * @property-read array $path_ids
+ * @property-read \App\Models\Category|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Product[] $products
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Category newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Category newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Category query()
@@ -28,12 +34,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Category wherePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Category whereUpdatedAt($value)
  * @mixin \Eloquent
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $children
- * @property-read Collection $ancestors
- * @property-read string $full_name
- * @property-read array $path_ids
- * @property-read \App\Models\Category|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Product[] $products
  */
 class Category extends Model
 {

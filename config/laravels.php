@@ -5,7 +5,7 @@
  */
 return [
     'listen_ip'                => env('LARAVELS_LISTEN_IP', '127.0.0.1'),
-    'listen_port'              => env('LARAVELS_LISTEN_PORT', 5200),
+    'listen_port'              => env('LARAVELS_LISTEN_PORT', 5201),
     'socket_type'              => defined('SWOOLE_SOCK_TCP') ? SWOOLE_SOCK_TCP : 1,
     'enable_coroutine_runtime' => false,
     'server'                   => env('LARAVELS_SERVER', 'LaravelS'),
@@ -82,9 +82,9 @@ return [
         'http_compression'   => false,
 
         // Slow log
-        // 'request_slowlog_timeout' => 2,
-        // 'request_slowlog_file'    => storage_path(sprintf('logs/slow-%s.log', date('Y-m'))),
-        // 'trace_event_worker'      => true,
+         'request_slowlog_timeout' => 2,
+         'request_slowlog_file'    => storage_path(sprintf('logs/slow-%s.log', date('Y-m'))),
+         'trace_event_worker'      => true,
 
         /**
          * More settings of Swoole

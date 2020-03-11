@@ -6,14 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Ramsey\Uuid\Uuid;
 
 /**
- * App\Models\Order.
+ * App\Models\Order
  *
- * @property \Illuminate\Database\Eloquent\Collection|\App\Models\OrderItem[] $items
- * @property \App\Models\User $user
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order query()
- * @mixin \Eloquent
  * @property int $id
  * @property string $no
  * @property int $user_id
@@ -21,6 +15,7 @@ use Ramsey\Uuid\Uuid;
  * @property float $total_amount
  * @property string|null $remark
  * @property \Illuminate\Support\Carbon|null $paid_at
+ * @property int|null $coupon_code_id
  * @property string|null $payment_method
  * @property string|null $payment_no
  * @property string $refund_status
@@ -32,8 +27,16 @@ use Ramsey\Uuid\Uuid;
  * @property array|null $extra
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $type 订单类型
+ * @property-read \App\Models\CouponCode|null $couponCode
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\OrderItem[] $items
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order query()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereAddress($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereClosed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereCouponCodeId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereExtra($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereId($value)
@@ -48,13 +51,10 @@ use Ramsey\Uuid\Uuid;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereShipData($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereShipStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereTotalAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereUserId($value)
- * @property int|null $coupon_code_id
- * @property-read \App\Models\CouponCode|null $couponCode
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereCouponCodeId($value)
- * @property string $type 订单类型
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Order whereType($value)
+ * @mixin \Eloquent
  */
 class Order extends Model
 {

@@ -19,6 +19,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $status 状态
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InstallmentItem[] $items
+ * @property-read \App\Models\Order $order
+ * @property-read \App\Models\User $user
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Installment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Installment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Installment query()
@@ -34,9 +37,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Installment whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Installment whereUserId($value)
  * @mixin \Eloquent
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\InstallmentItem[] $items
- * @property-read \App\Models\Order $order
- * @property-read \App\Models\User $user
  */
 class Installment extends Model
 {

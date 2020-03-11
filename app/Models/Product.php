@@ -2,8 +2,17 @@
 
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Storage;
 
 
 /**
@@ -20,29 +29,31 @@ use Illuminate\Support\Str;
  * @property int $sold_count
  * @property int $review_count
  * @property float $price
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Category|null $category
- * @property-read \App\Models\CrowdfundingProduct $crowdfunding
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Category|null $category
+ * @property-read CrowdfundingProduct $crowdfunding
+ * @property-read mixed $grouped_properties
  * @property-read string $image_url
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ProductSku[] $skus
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product query()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereCategoryId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereImage($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereOnSale($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product wherePrice($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereRating($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereReviewCount($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereSoldCount($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereTitle($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereType($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Product whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @property-read Collection|ProductProperty[] $properties
+ * @property-read Collection|ProductSku[] $skus
+ * @method static Builder|Product newModelQuery()
+ * @method static Builder|Product newQuery()
+ * @method static Builder|Product query()
+ * @method static Builder|Product whereCategoryId($value)
+ * @method static Builder|Product whereCreatedAt($value)
+ * @method static Builder|Product whereDescription($value)
+ * @method static Builder|Product whereId($value)
+ * @method static Builder|Product whereImage($value)
+ * @method static Builder|Product whereOnSale($value)
+ * @method static Builder|Product wherePrice($value)
+ * @method static Builder|Product whereRating($value)
+ * @method static Builder|Product whereReviewCount($value)
+ * @method static Builder|Product whereSoldCount($value)
+ * @method static Builder|Product whereTitle($value)
+ * @method static Builder|Product whereType($value)
+ * @method static Builder|Product whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class Product extends Model
 {
@@ -56,6 +67,7 @@ class Product extends Model
 
     protected $fillable = [
         'title',
+        'long_title',
         'description',
         'image',
         'on_sale',
@@ -73,7 +85,7 @@ class Product extends Model
 
     /**
      * 商品的sku
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function skus()
     {
@@ -90,12 +102,12 @@ class Product extends Model
             return $this->attributes['image'];
         }
 
-        return \Storage::disk('public')->url($this->attributes['image']);
+        return Storage::disk('public')->url($this->attributes['image']);
     }
 
     /**
      * 商品分类
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function category()
     {
@@ -104,10 +116,64 @@ class Product extends Model
 
     /**
      * 众筹商品
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function crowdfunding()
     {
         return $this->hasOne(CrowdfundingProduct::class);
+    }
+
+    /**
+     * 商品属性
+     * @return HasMany
+     */
+    public function properties()
+    {
+        return $this->hasMany(ProductProperty::class);
+    }
+
+    /**
+     * 将商品属性分组 更好的显示返回
+     * @return Collection|\Illuminate\Support\Collection
+     */
+    public function getGroupedPropertiesAttribute()
+    {
+        return $this->properties
+            ->groupBy('name')
+            ->map(function (\Illuminate\Support\Collection $properties) {
+                return $properties->pluck("value")->all();
+            });
+    }
+
+    public function toESArray()
+    {
+        $arr = Arr::only($this->toArray(), [
+            'id',
+            'type',
+            'title',
+            'category_id',
+            'long_title',
+            'on_sale',
+            'rating',
+            'sold_count',
+            'review_count',
+            'price',
+        ]);
+        // 如果商品有类目，则 category 字段为类目名数组，否则为空字符串
+        $arr['category'] = $this->category ? explode('-', $this->category->full_name) : '';
+        // 类目的path
+        $arr['category_path'] = $this->category ? $this->category->path : '';
+        $arr['description'] = strip_tags($this->description);
+        // 只取出需要的 SKU 字段
+        $arr['skus'] = $this->skus->map(function (ProductSku $sku) {
+            return Arr::only($sku->toArray(), ['title', 'description', 'price']);
+        });
+
+        // 取出需要的商品属性字段
+        $arr['properties'] = $this->properties->map(function (ProductProperty $property) {
+            return Arr::only($property->toArray(), ['name', 'value']);
+        });
+
+        return $arr;
     }
 }

@@ -10,7 +10,7 @@
     "require": {
         "php": "^7.1.3",
         "doctrine/dbal": " ~2.3",
-        "elasticsearch/elasticsearch": "~6.0",
+        "elasticsearch/elasticsearch": "~7.0",
         "encore/laravel-admin": "1.6.8",
         "fideloper/proxy": "^4.0",
         "hhxsv5/laravel-s": "~3.5.0",
@@ -18,7 +18,6 @@
         "laravel/tinker": "^1.0",
         "moontoast/math": "^1.1",
         "overtrue/laravel-lang": "^3.0",
-        "predis/predis": "^1.1",
         "yansongda/pay": "^2.6",
         "zgldh/qiniu-laravel-storage": "^0.10.2"
     },

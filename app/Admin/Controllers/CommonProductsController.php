@@ -3,6 +3,7 @@
 namespace App\Admin\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SyncOneProduct;
 use App\Models\Category;
 use App\Models\Product;
 use Encore\Admin\Controllers\HasResourceActions;
@@ -69,6 +70,7 @@ abstract class CommonProductsController extends Controller
 
     /**
      * 定义一个抽象方法，各个类型的控制器将实现本方法来定义列表应该展示哪些字段.
+     * @param  Grid  $grid
      */
     abstract protected function customGrid(Grid $grid);
 
@@ -80,6 +82,7 @@ abstract class CommonProductsController extends Controller
         $form->hidden('type')->value($this->getProductType());
 
         $form->text('title', '商品名称')->rules('required');
+        $form->text("long_title",'商品长标题')->rules('required');
         $form->select('category_id', '类目')->options(function ($id) {
             $category = Category::find($id);
             if ($category) {
@@ -100,6 +103,11 @@ abstract class CommonProductsController extends Controller
             $form->text('price', '单价')->rules('required|numeric|min:0.01');
             $form->text('stock', '剩余库存')->rules('required|integer|min:0');
         });
+
+        $form->hasMany("properties","商品属性",function (Form\NestedForm $form) {
+            $form->text("name","属性名")->rules("required");
+            $form->text("value","熟悉值")->rules('required');
+        });
         $form->saving(function (Form $form) {
             $form->model()->price = collect($form->input('skus'))->where(Form::REMOVE_FLAG_NAME, 0)->min('price') ?: 0;
         });
@@ -114,6 +122,12 @@ abstract class CommonProductsController extends Controller
         $form->footer(function (Form\Footer $footer) {
             // 去掉`查看`按钮
             $footer->disableViewCheck();
+        });
+
+        $form->saved(function (Form $form) {
+            /** @var Product $product */
+            $product = $form->model();
+            dispatch(new SyncOneProduct($product));
         });
 
         return $form;
