@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use phpDocumentor\Reflection\Types\Static_;
 use Storage;
 
 
@@ -145,6 +146,16 @@ class Product extends Model
             });
     }
 
+    public function scopeByIds(Builder $query, array $ids)
+    {
+        return $query->orderByRaw(sprintf("FIND_IN_SET(id,'%s')", join(',', $ids)))
+            ->findMany($ids);
+    }
+
+    /**
+     * 将商品组装成ElasticSearch的格式
+     * @return array
+     */
     public function toESArray()
     {
         $arr = Arr::only($this->toArray(), [
@@ -171,7 +182,9 @@ class Product extends Model
 
         // 取出需要的商品属性字段
         $arr['properties'] = $this->properties->map(function (ProductProperty $property) {
-            return Arr::only($property->toArray(), ['name', 'value']);
+            return array_merge(Arr::only($property->toArray(), ['name', 'value']), [
+                'search_value' => $property->name.':'.$property->value,
+            ]);
         });
 
         return $arr;

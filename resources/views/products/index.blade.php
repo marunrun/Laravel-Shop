@@ -9,6 +9,8 @@
                 <div class="card-body">
                     {{--筛选组件开始--}}
                     <form action="{{ route('products.index') }}" class="search-form">
+                        {{-- 一个隐藏字段 --}}
+                        <input type="hidden" name="filters">
                         <div class="form-row">
                             <div class="col-md-9">
                                 <div class="form-row">
@@ -33,6 +35,16 @@
                                             <span>&gt;</span>
                                             <input type="hidden" name="category_id" value="{{ $category->id }}">
                                         @endif
+
+                                        {{-- 商品属性面包屑开始 --}}
+                                        @foreach($propertyFilters as $name => $value)
+                                            <span class="filter">{{ $name }}:
+                                                <span class="filter-value">{{ $value }}</span>
+                                                {{-- 调用自定义的 removeFilterFromQuery --}}
+                                                <a class="remove-filter" href="javascript:  removeFilterFromQuery('{{ $name }}')">×</a>
+                                            </span>
+                                        @endforeach
+
                                     </div>
                                     {{-- 面包屑结束 --}}
                                     <div class="col-auto">
@@ -73,6 +85,20 @@
                                 </div>
                             </div>
                         @endif
+                        {{-- 分面搜索 --}}
+                        @foreach($properties as $property)
+                            <div class="row">
+                                {{--  输出属性名 --}}
+                                <div class="col-3 filter-key"> {{ $property['key'] }}:</div>
+                                <div class="col-9 filter-values">
+                                    {{-- 遍历属性值 --}}
+                                    @foreach($property['values'] as $value)
+                                        <a href="javascript: appendFilterToQuery('{{ $property['key'] }}','{{ $value }}')">{{ $value }}</a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                        {{-- 分面搜索结束 --}}
                     </div>
                     {{--展示子类目结束--}}
 
@@ -83,11 +109,11 @@
                                     <div class="top">
                                         <div class="img">
                                             <a href="{{ route('products.show',['product' => $product->id]) }}"><img
-                                                        src="{{ $product->image_url }}" alt=""></a>
+                                                    src="{{ $product->image_url }}" alt=""></a>
                                         </div>
                                         <div class="price"><b>￥</b>{{ $product->price }}</div>
                                         <div class="title"><a
-                                                    href="{{ route('products.show',['product' => $product->id]) }}">{{ $product->title }}</a>
+                                                href="{{ route('products.show',['product' => $product->id]) }}">{{ $product->title }}</a>
                                         </div>
                                     </div>
                                     <div class="bottom">
@@ -113,8 +139,79 @@
             $('.search-form select[name=order]').val(filters.order);
 
             $('.search-form select[name=order]').change(function () {
+
+                let searches = parseSearch();
+
+                if(searches['filters']) {
+                    $('.search-form input[name=filters]').val(searches['filters']);
+                }
                 $('.search-form').submit();
-            })
-        })
+            });
+        });
+
+
+        // 定义一个函数，用于解析当前 Url 里的参数，并以 Key-Value 对象形式返回
+        function parseSearch() {
+            // 初始化空对象
+            let searches = {};
+            // location.search 会返回 Url 中 ? 以及后面的查询参数
+            // substr(1) 将 ? 去除，然后以符号 & 分割成数组，然后遍历这个数组
+            location.search.substr(1).split('&').forEach(function (str) {
+                let res = str.split('=');
+                searches[decodeURIComponent(res[0])] = decodeURIComponent(res[1]);
+            });
+
+            return searches;
+        }
+
+        // 根据 key value 构建查询参数
+        function buildSearch(searches) {
+            let query = '?';
+            _.forEach(searches, function (value, key) {
+                query += encodeURIComponent(key) + '=' + encodeURIComponent(value) + '&';
+            });
+
+            return query.substr(0, query.length - 1);
+        }
+
+        function appendFilterToQuery(name, value) {
+            // 解析Url 参数
+            let searches = parseSearch();
+            // 如果已经有了 filters 查询
+            if (searches['filters']) {
+                // 就在原有的filers参数后面追加
+                searches['filters'] += '|' + name + ':' + value;
+            } else {
+                // 初始化
+                searches['filters'] = name + ':' + value;
+            }
+            // 重新构建查询参数 并自动跳转
+            location.search = buildSearch(searches);
+        }
+
+        // 移除筛选
+        function removeFilterFromQuery(name) {
+            let searches = parseSearch();
+
+            // 如果没有 filters 查询则什么都不用做
+            if (!searches['filters']) {
+                return;
+            }
+            let filters = [];
+            searches['filters'].split('|').forEach(function (filter) {
+                // 解析出属性名和属性值
+                let result = filter.split(':');
+                // 如果当前属性名与要移除的属性名一致，则退出
+                if (result[0] === name) {
+                    return;
+                }
+                // 否则将这个filter放入之前初始化的数组中
+                filters.push(filter)
+            });
+
+            // 重新给filters赋值
+            searches['filters'] = filters.join('|');
+            location.search = buildSearch(searches);
+        }
     </script>
 @stop

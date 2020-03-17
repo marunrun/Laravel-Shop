@@ -171,6 +171,31 @@
                             </div>
                         </div>
                     </div>
+                    {{-- 猜你喜欢开始 --}}
+                    @if(count($similar) > 0)
+                        <div class="similar-products">
+                            <div class="title">猜你喜欢</div>
+                            <div class="row products-list">
+                                @foreach($similar as $p)
+                                    <div class="col-3 product-item">
+                                        <div class="product-content">
+                                            <div class="top">
+                                                <div class="img">
+                                                    <a href="{{ route('products.show',['product' => $p->id]) }}"><img
+                                                            src="{{ $p->image_url }}" alt=""></a>
+                                                </div>
+                                                <div class="price"><b>￥</b>{{ $p->price }}</div>
+                                                <div class="title">
+                                                    <a href="{{ route('products.show',['product' => $p->id]) }}">{{ $p->title }}</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                    {{-- 猜你喜欢结束 --}}
                 </div>
             </div>
         </div>

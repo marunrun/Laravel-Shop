@@ -6,7 +6,9 @@ use App\Exceptions\InvalidRequestException;
 use App\Models\Category;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\SearchBuilders\ProductSearchBuilder;
 use App\Services\CategoryService;
+use App\Services\ProductService;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -25,21 +27,10 @@ class ProductsController extends Controller
     {
         $page = $request->input('page', 1);
         $perPage = 16;
-        $params = [
-            'index' => 'products',
-            'body' => [
-                'from' => ($page - 1) * $perPage,
-                'size' => $perPage,
-                'query' => [
-                    'bool' => [
-                        'filter' => [
-                            ['term' => ['on_sale' => true]],
-                        ],
-                    ],
-                ],
-            ],
-        ];
-        // 是否有提交 order 参数，如果有就赋值给 $order 变量
+
+        // 默认查询上架商品 并且设置分页
+        $builder = (new ProductSearchBuilder())->onSale()->paginate($perPage, $page);
+
         // order 参数用来控制商品的排序规则
         if ($order = $request->input('order', '')) {
             // 是否是以 _asc 或者 _desc 结尾
@@ -48,56 +39,58 @@ class ProductsController extends Controller
                 if (in_array($m[1], ['price', 'sold_count', 'rating'])) {
                     // 根据传入的排序值来构造排序参数
                     $params['body']['sort'] = [[$m[1] => $m[2]]];
+                    $builder->orderBy($m[1], $m[2]);
                 }
             }
         }
 
         if ($request->input('category_id') && $category = Category::find($request->input('category_id'))) {
-            if ($category->is_directory) {
-                // 如果是父类目 使用category_path筛选
-                $params['body']['query']['bool']['filter'][] = [
-                    'prefix' => ['category_path' => $category->path.$category->id.'-'],
-                ];
-            } else {
-                // 否则通过 category_id来筛选
-                $params['body']['query']['bool']['filter'][] = [
-                    'term' => ['category_id' => $category->id],
-                ];
-            }
+            $builder->category($category);
         }
 
         if ($search = $request->input('search', '')) {
             // 将搜索词根据空格拆分成数组，并过滤掉空项
             $keywords = array_filter(explode(' ', $search));
-            $params['body']['query']['bool']['must'] = [];
-            foreach ($keywords as $keyword) {
-                $params['body']['query']['bool']['must'][] = [
-                    [
-                        'multi_match' => [
-                            'query' => $keyword,
-                            'fields' => [
-                                'title^2',
-                                'long_title^2',
-                                'category^2',
-                                'description',
-                                'skus_title',
-                                'skus_description',
-                                'properties_value',
-                            ],
-                        ],
-                    ],
-                ];
-            }
-
+            $builder->keywords($keywords);
         }
 
-        $res = app('es')->search($params);
+        // 分面搜索
+        if ($search || isset($category)) {
+            $builder->aggregateProperties();
+        }
+
+        $propertyFilters = [];
+        // 商品属性筛选
+        if ($filterString = $request->input('filters')) {
+            $filterArr = explode('|', $filterString);
+            foreach ($filterArr as $filter) {
+                [$name, $value] = explode(':', $filter);
+                $propertyFilters[$name] = $value;
+                $builder->propertyFilter($name, $value);
+            }
+        }
+
+
+        $res = app('es')->search($builder->getParams());
         $productsIds = collect($res['hits']['hits'])->pluck('_id')->all();
-        $products = Product::query()->orderByRaw(sprintf("FIND_IN_SET(id,'%s')",
-            join(',', $productsIds)))->findMany($productsIds);
+        $products = Product::query()->byIds($productsIds);
         $paper = new LengthAwarePaginator($products, $res['hits']['total']['value'], $perPage, $page, [
             'path' => route('products.index', false),
         ]);
+
+        $properties = [];
+        if (isset($res['aggregations'])) {
+            $properties = collect($res['aggregations']['properties']['properties']['buckets'])
+                ->map(function ($bucket) {
+                    return [
+                        'key' => $bucket['key'],
+                        'values' => collect($bucket['value']['buckets'])->pluck('key')->all(),
+                    ];
+                })->filter(function ($property) use ($propertyFilters) {
+                    return count($property['values']) > 1 && !isset($propertyFilters[$property['key']]);
+                });
+
+        }
 
         return view('products.index', [
             'products' => $paper,
@@ -106,59 +99,8 @@ class ProductsController extends Controller
                 'order' => $order,
             ],
             'category' => $category ?? null,
-//            'categoryTree' => $categoryService->getCategoryTree(),
-        ]);
-
-
-        // 创建一个查询构建器
-        $builder = Product::query()->where('on_sale', true);
-
-        // 模糊搜索 商品标题 描述  sku标题 sku描述
-        if ($search = $request->get('search', '')) {
-            $like = '%'.$search.'%';
-            $builder->where(function (Builder $query) use ($like) {
-                $query->where('title', 'like', $like)
-                    ->orWhere('description', 'like', $like)
-                    ->orWhereHas('skus', function (Builder $query) use ($like) {
-                        $query->where('title', 'like', $like)
-                            ->orWhere('description', 'like', $like);
-                    });
-            });
-        }
-
-        if ($request->input('category_id') && $category = Category::find($request->input('category_id'))) {
-            // 如果这是一个父类目
-            if ($category->is_directory) {
-                // 则筛选出该类目下所有子类目的商品
-                $builder->whereHas('category', function (Builder $query) use ($category) {
-                    $query->where('path', 'like', $category->path.$category->id."-%");
-                });
-            } else {
-                // 如果这不是一个父类目
-                $builder->where('category_id', $category->id);
-            }
-        }
-
-
-        // 是否有提交 order 参数 如果有 就赋值给$order
-        if ($order = $request->get('order', '')) {
-            if (preg_match('/^(.+)_(asc|desc)$/', $order, $m)) {
-                if (in_array($m[1], ['price', 'sold_count', 'rating'])) {
-                    $builder->orderBy($m[1], $m[2]);
-                }
-            }
-        }
-
-        $products = $builder->paginate(16);
-
-        return view('products.index', [
-            'products' => $products,
-            'filters' => [
-                'search' => $search,
-                'order' => $order,
-            ],
-            'category' => $category ?? null,
-            'categoryTree' => $categoryService->getCategoryTree(),
+            'properties' => $properties,
+            'propertyFilters' => $propertyFilters,
         ]);
     }
 
@@ -166,11 +108,12 @@ class ProductsController extends Controller
      * @param  Product  $product
      * @param  Request  $request
      *
+     * @param  ProductService  $productService
      * @return Factory|View
      *
      * @throws InvalidRequestException
      */
-    public function show(Product $product, Request $request)
+    public function show(Product $product, Request $request, ProductService $productService)
     {
         if (!$product->on_sale) {
             throw new InvalidRequestException('商品未上架');
@@ -181,6 +124,12 @@ class ProductsController extends Controller
             $favored = boolval($user->favoriteProducts()->find($product->id));
         }
 
+        // 获取相似商品
+        $productIds = $productService->getSimilarProductIds($product, 4);
+        // 从数据库中读取商品数据
+        $similar = Product::query()
+            ->byIds($productIds);
+
         $reviews = OrderItem::query()
             ->with(['order.user', 'productSku'])
             ->whereProductId($product->id)
@@ -189,7 +138,7 @@ class ProductsController extends Controller
             ->limit(10)
             ->get();
 
-        return view('products.show', compact('product', 'favored', 'reviews'));
+        return view('products.show', compact('product', 'favored', 'reviews', 'similar'));
     }
 
     /** 收藏商品
