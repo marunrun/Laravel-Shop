@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\InvalidRequestException;
+use App\Models\Product;
 use App\Models\Category;
 use App\Models\OrderItem;
-use App\Models\Product;
-use App\SearchBuilders\ProductSearchBuilder;
-use App\Services\CategoryService;
-use App\Services\ProductService;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
+use App\Services\ProductService;
+use App\Services\CategoryService;
+use Illuminate\Contracts\View\Factory;
+use App\Exceptions\InvalidRequestException;
+use App\SearchBuilders\ProductSearchBuilder;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ProductsController extends Controller
 {
@@ -89,7 +88,6 @@ class ProductsController extends Controller
                 })->filter(function ($property) use ($propertyFilters) {
                     return count($property['values']) > 1 && !isset($propertyFilters[$property['key']]);
                 });
-
         }
 
         return view('products.index', [

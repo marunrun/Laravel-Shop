@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-
 use App\Models\Category;
 
 class CategoryService
@@ -29,6 +28,5 @@ class CategoryService
 
                 return $data;
             });
-
     }
 }
