@@ -14,7 +14,7 @@
         "encore/laravel-admin": "1.6.8",
         "fideloper/proxy": "^4.0",
         "hhxsv5/laravel-s": "~3.5.0",
-        "laravel/framework": "5.7.*",
+        "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
         "moontoast/math": "^1.1",
         "overtrue/laravel-lang": "^3.0",
